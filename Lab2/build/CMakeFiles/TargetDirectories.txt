@@ -1,0 +1,9 @@
+/home/alice/Scrivania/Laboratori_Compilatori/Lab2/build/CMakeFiles/intrinsics_gen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab2/build/CMakeFiles/omp_gen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab2/build/CMakeFiles/acc_gen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab2/build/CMakeFiles/ARMTargetParserTableGen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab2/build/CMakeFiles/AArch64TargetParserTableGen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab2/build/CMakeFiles/RISCVTargetParserTableGen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab2/build/CMakeFiles/LocalOpts.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab2/build/CMakeFiles/edit_cache.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab2/build/CMakeFiles/rebuild_cache.dir
