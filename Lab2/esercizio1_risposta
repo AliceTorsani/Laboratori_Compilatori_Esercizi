@@ -1,0 +1,69 @@
+Sì — le singole references (cioè gli Use) si possono aggiornare separatamente, e questa è proprio una distinzione fondamentale in LLVM tra:
+
+Users → chi usa un valore (es. un’istruzione)
+Uses → le singole occorrenze di quel valore come operando
+Risposta alla domanda
+
+👉 Sì, è possibile aggiornare le singole references separatamente, usando la classe Use.
+
+Nel tuo codice:
+Inst1st.replaceAllUsesWith(NewInst);
+stai facendo una sostituzione globale (tutti gli usi).
+
+Ma potresti invece modificare uno specifico uso così:
+for (auto &U : Inst1st.uses()) {
+    if (qualche_condizione) {
+        U.set(NewInst);
+    }
+}
+Oppure ancora più esplicito:
+Use &U = *Inst1st.use_begin();
+U.set(NewInst);
+Spiegazione concettuale
+
+LLVM ha questa struttura:
+
+Value
+  ↑
+ Use (singola occorrenza)
+  ↑
+User (es. Instruction)
+
+Quindi:
+
+    Un User può avere più operandi → quindi più Use
+
+    Ogni Use è indipendente → può essere modificato singolarmente
+Collegamento al tuo esempio
+
+Se modifichi Foo.ll in:
+
+%4 = mul nsw i32 %3, %3
+
+Allora:
+
+    %3 ha 1 user (mul)
+
+    ma 2 uses (operando 0 e operando 1)
+
+Quindi:
+
+    user_begin() → 1 elemento
+
+    use_begin() → 2 elementi
+
+💡 Ed è proprio qui che ha senso aggiornare una sola reference:
+
+U.getOperandNo()
+
+ti dice quale operando stai modificando.
+ Differenza pratica
+Metodo			Cosa fa
+replaceAllUsesWith	sostituisce tutti gli usi
+Use::set()		modifica un singolo uso
+Conclusione (risposta pronta da scrivere)
+
+✔ Sì, le singole references possono essere aggiornate separatamente.
+In LLVM ogni uso di un valore è rappresentato da un oggetto Use, che può essere modificato individualmente tramite Use::set().
+Questo permette di sostituire solo alcune occorrenze di un valore, a differenza di replaceAllUsesWith() che aggiorna tutti gli usi contemporaneamente.
+
