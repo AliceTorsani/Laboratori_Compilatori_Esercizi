@@ -70,6 +70,58 @@ struct LocalOpts: PassInfoMixin<LocalOpts> {
       // Si possono aggiornare le singole references separatamente?
       // Controlla la documentazione e prova a rispondere.
       Inst1st.replaceAllUsesWith(NewInst);
+      
+      //sono dentro il ciclo sui basic block
+      //esercizio2 (strength reduction)
+      for (auto IterInst = B.begin(); IterInst != B.end(); ) {
+        Instruction *I = &*IterInst++;
+        
+        // Controlla se è una BinaryOperator
+        if (auto *BinOp = dyn_cast<BinaryOperator>(I)) {
+
+          // Controlla se è una MUL
+          if (BinOp->getOpcode() == Instruction::Mul) {
+
+            Value *Op0 = BinOp->getOperand(0);
+            Value *Op1 = BinOp->getOperand(1);
+
+            ConstantInt *C = nullptr;
+            Value *OtherOp = nullptr;
+
+            // Trova la costante
+            if ((C = dyn_cast<ConstantInt>(Op0))) {
+              OtherOp = Op1;
+            } else if ((C = dyn_cast<ConstantInt>(Op1))) {
+              OtherOp = Op0;
+            }
+
+            // Se è una potenza di 2
+            if (C && C->getValue().isPowerOf2()) {
+
+              unsigned ShiftAmount = C->getValue().logBase2();
+
+              // Crea la SHL
+              Instruction *Shl = BinaryOperator::Create(
+                  Instruction::Shl,
+                  OtherOp,
+                  ConstantInt::get(C->getType(), ShiftAmount)
+              );
+
+              // Inserisci subito dopo la MUL
+              Shl->insertAfter(BinOp);
+
+              // Sostituisci tutti gli usi della MUL
+              BinOp->replaceAllUsesWith(Shl);
+
+              // (opzionale debug)
+              outs() << "Sostituita MUL con SHL: ";
+              outs() << *Shl << "\n";
+            }
+          }
+        }
+      }
+
+
     }
 
 
