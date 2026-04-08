@@ -3,130 +3,80 @@
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Constants.h"
 
 using namespace llvm;
 
 namespace {
 
 // New PM implementation
+//Invocare il passo nella cartella /test nel seguente modo:
+//opt -S -load-pass-plugin ../build/libAlgId.so -p algebraic-identity Foo.ll -o Foo.optimized.ll
 struct AlgId: PassInfoMixin<AlgId> {
 
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &) {
 
-    outs()<<"Passo di Algebraic Identity";
-    //SCRIVERE IL PASSO!!!! SOTTO C'E' IL CODICE VECCHIO
+    outs()<<"Eseguito Passo di Algebraic Identity"<<"\n";
 
-    for (auto Iter = F.begin(); Iter != F.end(); ++Iter) {
-      BasicBlock &B = *Iter;
-       // Preleviamo le prime due istruzioni del BB
-      Instruction &Inst1st = *B.begin(), &Inst2nd = *(++B.begin());
+    //Passo di algebraic identity
+    std::vector<Instruction*> toRemove;
 
-      // L'indirizzo della prima istruzione deve essere uguale a quello del 
-      // primo operando della seconda istruzione (per costruzione dell'esempio)
-      assert(&Inst1st == Inst2nd.getOperand(0));
+    for (auto BBIter = F.begin(); BBIter != F.end(); ++BBIter) {
+        BasicBlock &B = *BBIter;
 
-      // Stampa la prima istruzione
-      outs() << "PRIMA ISTRUZIONE: " << Inst1st << "\n";
-      // Stampa la prima istruzione come operando
-      outs() << "COME OPERANDO: ";
-      Inst1st.printAsOperand(outs(), false);
-      outs() << "\n";
+        for (auto InstIter = B.begin(); InstIter != B.end(); ++InstIter) {
+            Instruction &I = *InstIter;
 
-      // User-->Use-->Value
-      outs() << "I MIEI OPERANDI SONO:\n";
-      for (auto Iter = Inst1st.op_begin(); Iter != Inst1st.op_end(); ++Iter) {
-        Value *Operand = *Iter;
+            auto *binOp = dyn_cast<BinaryOperator>(&I);
+            if (!binOp) continue;
 
-        if (Argument *Arg = dyn_cast<Argument>(Operand)) {
-          outs() << "\t" << *Arg << ": SONO L'ARGOMENTO N. " << Arg->getArgNo() 
-  	         <<" DELLA FUNZIONE " << Arg->getParent()->getName()
-                 << "\n";
-        }
-        if (ConstantInt *C = dyn_cast<ConstantInt>(Operand)) {
-          outs() << "\t" << *C << ": SONO UNA COSTANTE INTERA DI VALORE " << C->getValue()
-                 << "\n";
-        }
-      }
+            Value *op1 = binOp->getOperand(0);
+            Value *op2 = binOp->getOperand(1);
 
-      outs() << "LA LISTA DEI MIEI USERS:\n";
-      for (auto Iter = Inst1st.user_begin(); Iter != Inst1st.user_end(); ++Iter) {
-        //outs() << "\t" << *(dyn_cast<Instruction>(*Iter)) << "\n";
-	User *U = *Iter;
-        outs() << "\t" << *U << "\n";
-      }
+            // ADD
+            if (binOp->getOpcode() == Instruction::Add) {
 
-      // Qual è la differenza tra gli USERS e gli USES?
-      // Prova a vedere cosa succede se in Foo.ll la seconda istruzione diventa
-      // %4 = mul nsw i32 %3, %3
-      outs() << "E DEI MIEI USI:\n";
-      for (auto Iter = Inst1st.use_begin(); Iter != Inst1st.use_end(); ++Iter) {
-        //outs() << "\t" << *(dyn_cast<Instruction>(Iter->getUser())) << "\n";
-	Use &U = *Iter;
-        outs() << "\t" << *U.getUser() << "@operand" << U.getOperandNo() << "\n";
-      }
-
-      // Manipolazione delle istruzioni
-      Instruction *NewInst = BinaryOperator::Create(
-          Instruction::Add, Inst1st.getOperand(0), Inst1st.getOperand(0));
-
-      NewInst->insertAfter(&Inst1st);
-      // Si possono aggiornare le singole references separatamente?
-      // Controlla la documentazione e prova a rispondere.
-      Inst1st.replaceAllUsesWith(NewInst);
-      
-      //sono dentro il ciclo sui basic block
-      //esercizio2 (strength reduction)
-      for (auto IterInst = B.begin(); IterInst != B.end(); ) {
-        Instruction *I = &*IterInst++;
-        
-        // Controlla se è una BinaryOperator
-        if (auto *BinOp = dyn_cast<BinaryOperator>(I)) {
-
-          // Controlla se è una MUL
-          if (BinOp->getOpcode() == Instruction::Mul) {
-
-            Value *Op0 = BinOp->getOperand(0);
-            Value *Op1 = BinOp->getOperand(1);
-
-            ConstantInt *C = nullptr;
-            Value *OtherOp = nullptr;
-
-            // Trova la costante
-            if ((C = dyn_cast<ConstantInt>(Op0))) {
-              OtherOp = Op1;
-            } else if ((C = dyn_cast<ConstantInt>(Op1))) {
-              OtherOp = Op0;
+                if (auto *C = dyn_cast<ConstantInt>(op1)) {
+                    if (C->isZero()) {
+                        I.replaceAllUsesWith(op2);
+                        toRemove.push_back(&I);
+                    }
+                } 
+                else if (auto *C = dyn_cast<ConstantInt>(op2)) {
+                    if (C->isZero()) {
+                        I.replaceAllUsesWith(op1);
+                        toRemove.push_back(&I);
+                    }
+                }
             }
 
-            // Se è una potenza di 2
-            if (C && C->getValue().isPowerOf2()) {
+            // MUL
+            if (binOp->getOpcode() == Instruction::Mul) {
 
-              unsigned ShiftAmount = C->getValue().logBase2();
-
-              // Crea la SHL
-              Instruction *Shl = BinaryOperator::Create(
-                  Instruction::Shl,
-                  OtherOp,
-                  ConstantInt::get(C->getType(), ShiftAmount)
-              );
-
-              // Inserisci subito dopo la MUL
-              Shl->insertAfter(BinOp);
-
-              // Sostituisci tutti gli usi della MUL
-              BinOp->replaceAllUsesWith(Shl);
-
-              // (opzionale debug)
-              outs() << "Sostituita MUL con SHL: ";
-              outs() << *Shl << "\n";
+                if (auto *C = dyn_cast<ConstantInt>(op1)) {
+                    if (C->isOne()) {
+                        I.replaceAllUsesWith(op2);
+                        toRemove.push_back(&I);
+                    }
+                } 
+                else if (auto *C = dyn_cast<ConstantInt>(op2)) {
+                    if (C->isOne()) {
+                        I.replaceAllUsesWith(op1);
+                        toRemove.push_back(&I);
+                    }
+                }
             }
-          }
         }
-      }
-
-
     }
 
+    // Eliminazione istruzioni
+    for (auto I = toRemove.begin(); I != toRemove.end(); ++I) {
+        (*I)->eraseFromParent();
+    }
+
+    
 
     return PreservedAnalyses::all();
   }
