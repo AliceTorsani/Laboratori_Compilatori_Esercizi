@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -fno-rtti -shared -Wl,-soname,libAlgId.so -o libAlgId.so CMakeFiles/AlgId.dir/AlgId.cpp.o
