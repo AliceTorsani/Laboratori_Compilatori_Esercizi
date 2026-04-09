@@ -14,6 +14,8 @@ namespace {
 // New PM implementation
 //Invocare il passo nella cartella /test nel seguente modo:
 //opt -S -load-pass-plugin ../build/libAlgId.so -p algebraic-identity Foo.ll -o Foo.optimized.ll
+
+// Definizione del pass come Function Pass
 struct AlgId: PassInfoMixin<AlgId> {
 
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &) {
@@ -21,29 +23,40 @@ struct AlgId: PassInfoMixin<AlgId> {
     outs()<<"Eseguito Passo di Algebraic Identity"<<"\n";
 
     //Passo di algebraic identity
+
+    // Vettore per salvare le istruzioni da eliminare
+    // (non le eliminiamo subito per evitare problemi con gli iteratori)
     std::vector<Instruction*> toRemove;
 
+    // Iterazione su tutti i Basic Block della funzione
     for (auto BBIter = F.begin(); BBIter != F.end(); ++BBIter) {
         BasicBlock &B = *BBIter;
 
+        // Iterazione su tutte le istruzioni del Basic Block
         for (auto InstIter = B.begin(); InstIter != B.end(); ++InstIter) {
             Instruction &I = *InstIter;
 
+            // Controlliamo se l'istruzione è un'operazione binaria (add, mul, ecc.)
             auto *binOp = dyn_cast<BinaryOperator>(&I);
             if (!binOp) continue;
 
+            // Recuperiamo i due operandi
             Value *op1 = binOp->getOperand(0);
             Value *op2 = binOp->getOperand(1);
 
-            // ADD
+            // CASO ADD (x + 0 oppure 0 + x)
             if (binOp->getOpcode() == Instruction::Add) {
 
+                // Caso: 0 + x
                 if (auto *C = dyn_cast<ConstantInt>(op1)) {
                     if (C->isZero()) {
+                        // Sostituisce tutti gli usi dell'istruzione con op2 (cioè x)
                         I.replaceAllUsesWith(op2);
+                        // Segna l'istruzione per la rimozione
                         toRemove.push_back(&I);
                     }
                 } 
+                // Caso: x + 0
                 else if (auto *C = dyn_cast<ConstantInt>(op2)) {
                     if (C->isZero()) {
                         I.replaceAllUsesWith(op1);
@@ -52,15 +65,17 @@ struct AlgId: PassInfoMixin<AlgId> {
                 }
             }
 
-            // MUL
+            // CASO MUL (x * 1 oppure 1 * x)
             if (binOp->getOpcode() == Instruction::Mul) {
 
+                // Caso: 1 * x
                 if (auto *C = dyn_cast<ConstantInt>(op1)) {
                     if (C->isOne()) {
                         I.replaceAllUsesWith(op2);
                         toRemove.push_back(&I);
                     }
                 } 
+                // Caso: x * 1
                 else if (auto *C = dyn_cast<ConstantInt>(op2)) {
                     if (C->isOne()) {
                         I.replaceAllUsesWith(op1);
@@ -71,12 +86,13 @@ struct AlgId: PassInfoMixin<AlgId> {
         }
     }
 
-    // Eliminazione istruzioni
+    // RIMOZIONE DELLE ISTRUZIONI
+    // Ora possiamo eliminare le istruzioni segnate
+    // (in sicurezza, fuori dal ciclo principale)
     for (auto I = toRemove.begin(); I != toRemove.end(); ++I) {
         (*I)->eraseFromParent();
     }
 
-    
 
     return PreservedAnalyses::all();
   }
