@@ -1,0 +1,9 @@
+/home/alice/Scrivania/Laboratori_Compilatori/PrimoAssignment/Multi_Opt/build/CMakeFiles/intrinsics_gen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/PrimoAssignment/Multi_Opt/build/CMakeFiles/omp_gen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/PrimoAssignment/Multi_Opt/build/CMakeFiles/acc_gen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/PrimoAssignment/Multi_Opt/build/CMakeFiles/ARMTargetParserTableGen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/PrimoAssignment/Multi_Opt/build/CMakeFiles/AArch64TargetParserTableGen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/PrimoAssignment/Multi_Opt/build/CMakeFiles/RISCVTargetParserTableGen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/PrimoAssignment/Multi_Opt/build/CMakeFiles/MultiOpt.dir
+/home/alice/Scrivania/Laboratori_Compilatori/PrimoAssignment/Multi_Opt/build/CMakeFiles/edit_cache.dir
+/home/alice/Scrivania/Laboratori_Compilatori/PrimoAssignment/Multi_Opt/build/CMakeFiles/rebuild_cache.dir
