@@ -14,6 +14,7 @@ namespace {
 // New PM implementation
 //Invocare il passo nella cartella /test nel seguente modo:
 //opt -S -load-pass-plugin ../build/libLoopPass.so -p -loop-pass Loop.m2r.ll -o Loop.optimized.ll
+//opt -S -load-pass-plugin ../build/libLoopPass.so -p -loop-pass Test.m2r.ll -o Test.optimized.ll
 struct LoopPass: PassInfoMixin<LoopPass> {
 
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM) {
