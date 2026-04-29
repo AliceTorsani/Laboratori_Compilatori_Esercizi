@@ -22,21 +22,23 @@ struct LoopPass: PassInfoMixin<LoopPass> {
 
     LoopInfo &LI = AM.getResult<LoopAnalysis>(F);
 
-    // 1. Verifica presenza loop
+    // 1. Verifica presenza loop: se non ci sono loop → esci
     if (LI.empty()) {
+      outs()<<"Non ci sono loop, esco"<<"\n";
       return PreservedAnalyses::all();
     }
 
-    // 2. Scorrere tutti i basic block con iteratori
+    // 2. Scorrere tutti i basic block con iteratori: scorro i basic block e verifico header
     for (Function::iterator BB_it = F.begin(); BB_it != F.end(); ++BB_it) {
       BasicBlock &BB = *BB_it;
 
       if (LI.isLoopHeader(&BB)) {
-        errs() << "Loop header trovato: " << BB.getName() << "\n";
+        errs() << "Loop header trovato:\n";
+        BB.print(errs());  // stampa tutto il blocco
       }
     }
 
-    // Funzione ricorsiva per visitare loop (anche annidati)
+    // Funzione per visitare loop (punto 3)
     std::function<void(Loop*)> visitLoop = [&](Loop *L) {
 
       // a) Verifica forma normale
@@ -46,7 +48,7 @@ struct LoopPass: PassInfoMixin<LoopPass> {
         errs() << "Loop NON in forma normale\n";
       }
 
-      // b) Header → funzione → stampa CFG
+      // b) Header → funzione → stampa CFG (solo BB)
       BasicBlock *Header = L->getHeader();
       Function *Func = Header->getParent(); // richiesto dal testo
 
@@ -54,14 +56,7 @@ struct LoopPass: PassInfoMixin<LoopPass> {
 
       for (Function::iterator BB_it = Func->begin(); BB_it != Func->end(); ++BB_it) {
         BasicBlock &BB = *BB_it;
-
-        errs() << BB.getName() << " -> ";
-
-        for (succ_iterator SI = succ_begin(&BB); SI != succ_end(&BB); ++SI) {
-          errs() << (*SI)->getName() << " ";
-        }
-
-        errs() << "\n";
+        BB.print(errs());
       }
 
       // c) Blocchi del loop (con iteratori)
@@ -69,12 +64,16 @@ struct LoopPass: PassInfoMixin<LoopPass> {
 
       for (Loop::block_iterator BI = L->block_begin(); BI != L->block_end(); ++BI) {
         BasicBlock *BB = *BI;
-        errs() << BB->getName() << "\n";
+        BB->print(errs());
       }
 
-      // Visita sotto-loop
+      // Subloop: solo segnalazione header
       for (Loop::iterator SubL = L->begin(); SubL != L->end(); ++SubL) {
-        visitLoop(*SubL);
+        Loop *SL = *SubL;
+        BasicBlock *SubHeader = SL->getHeader();
+
+        errs() << "Questo è l'header di un subloop (blocco di inizio subloop):\n";
+        SubHeader->print(errs());
       }
     };
 
