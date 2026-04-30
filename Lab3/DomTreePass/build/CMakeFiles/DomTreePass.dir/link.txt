@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -fno-rtti -shared -Wl,-soname,libDomTreePass.so -o libDomTreePass.so CMakeFiles/DomTreePass.dir/DomTreePass.cpp.o

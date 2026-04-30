@@ -1,0 +1,9 @@
+/home/alice/Scrivania/Laboratori_Compilatori/Lab3/DomTreePass/build/CMakeFiles/intrinsics_gen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab3/DomTreePass/build/CMakeFiles/omp_gen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab3/DomTreePass/build/CMakeFiles/acc_gen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab3/DomTreePass/build/CMakeFiles/ARMTargetParserTableGen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab3/DomTreePass/build/CMakeFiles/AArch64TargetParserTableGen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab3/DomTreePass/build/CMakeFiles/RISCVTargetParserTableGen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab3/DomTreePass/build/CMakeFiles/DomTreePass.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab3/DomTreePass/build/CMakeFiles/edit_cache.dir
+/home/alice/Scrivania/Laboratori_Compilatori/Lab3/DomTreePass/build/CMakeFiles/rebuild_cache.dir
