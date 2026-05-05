@@ -1,0 +1,9 @@
+/home/alice/Scrivania/Laboratori_Compilatori/TerzoAssignment/LICM/build/CMakeFiles/intrinsics_gen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/TerzoAssignment/LICM/build/CMakeFiles/omp_gen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/TerzoAssignment/LICM/build/CMakeFiles/acc_gen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/TerzoAssignment/LICM/build/CMakeFiles/ARMTargetParserTableGen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/TerzoAssignment/LICM/build/CMakeFiles/AArch64TargetParserTableGen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/TerzoAssignment/LICM/build/CMakeFiles/RISCVTargetParserTableGen.dir
+/home/alice/Scrivania/Laboratori_Compilatori/TerzoAssignment/LICM/build/CMakeFiles/LoopInvariantCodeMotion.dir
+/home/alice/Scrivania/Laboratori_Compilatori/TerzoAssignment/LICM/build/CMakeFiles/edit_cache.dir
+/home/alice/Scrivania/Laboratori_Compilatori/TerzoAssignment/LICM/build/CMakeFiles/rebuild_cache.dir
