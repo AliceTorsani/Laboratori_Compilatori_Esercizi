@@ -104,7 +104,11 @@ struct LoopInvariantCodeMotion: PassInfoMixin<LoopInvariantCodeMotion>{
         // Escludiamo terminatori (branch, return, ecc.)
         if (I.isTerminator())
             return false;
-
+        
+        // Se l'istruzione non è binaria, allora non la analizziamo
+        if(!I.isBinaryOp())
+            return false;
+        
         // Analizziamo tutti gli operandi dell'istruzione
         // prendiamo gli usi (operands)
         for (Value *Op : I.operands()) {
@@ -114,8 +118,8 @@ struct LoopInvariantCodeMotion: PassInfoMixin<LoopInvariantCodeMotion>{
                 continue;
 
             // Caso 2: parametro della funzione → invariant
-            if (isa<Argument>(Op))
-                continue;
+            //if (isa<Argument>(Op))
+            //    continue;
 
             // Caso 3: valore definito da un'altra istruzione
             // risaliamo alla definizione
