@@ -108,7 +108,7 @@ struct LoopInvariantCodeMotion: PassInfoMixin<LoopInvariantCodeMotion>{
         // - binary operations
         // - unary instructions
 
-        if (!(isa<BinaryOperator>(&I) || isa<UnaryInstruction>(&I)))
+        if (!(isa<BinaryOperator>(&I) || isa<UnaryInstruction>(&I) || I.isCast()))
             return false;
         
         // Analizziamo tutti gli operandi dell'istruzione
