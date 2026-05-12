@@ -18,6 +18,7 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/DenseMap.h
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/DenseMapInfo.h
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/DenseSet.h
+ /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/DepthFirstIterator.h
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/EpochTracker.h
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/EquivalenceClasses.h
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/FloatingPointMode.h
@@ -115,6 +116,7 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/DerivedTypes.h
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/DiagnosticHandler.h
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/DiagnosticInfo.h
+ /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/Dominators.h
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/EHPersonalities.h
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/FMF.h
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/FPEnv.h
@@ -234,6 +236,7 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/IPO/ModuleInliner.h
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Instrumentation.h
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Scalar/LoopPassManager.h
+ /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Utils/BasicBlockUtils.h
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Utils/LCSSA.h
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Utils/LoopSimplify.h
  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Utils/LoopUtils.h
@@ -433,7 +436,6 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o
  /usr/include/c++/14/bits/unique_lock.h
  /usr/include/c++/14/bits/unique_ptr.h
  /usr/include/c++/14/bits/unordered_map.h
- /usr/include/c++/14/bits/unordered_set.h
  /usr/include/c++/14/bits/uses_allocator.h
  /usr/include/c++/14/bits/uses_allocator_args.h
  /usr/include/c++/14/bits/utility.h
@@ -493,7 +495,6 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o
  /usr/include/c++/14/type_traits
  /usr/include/c++/14/typeinfo
  /usr/include/c++/14/unordered_map
- /usr/include/c++/14/unordered_set
  /usr/include/c++/14/utility
  /usr/include/c++/14/variant
  /usr/include/c++/14/vector

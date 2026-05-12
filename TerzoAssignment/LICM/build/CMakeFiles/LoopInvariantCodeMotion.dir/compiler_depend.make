@@ -17,6 +17,7 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/DenseMap.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/DenseMapInfo.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/DenseSet.h \
+  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/DepthFirstIterator.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/EpochTracker.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/EquivalenceClasses.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/FloatingPointMode.h \
@@ -114,6 +115,7 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/DerivedTypes.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/DiagnosticHandler.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/DiagnosticInfo.h \
+  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/Dominators.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/EHPersonalities.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/FMF.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/FPEnv.h \
@@ -233,6 +235,7 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/IPO/ModuleInliner.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Instrumentation.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Scalar/LoopPassManager.h \
+  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Utils/BasicBlockUtils.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Utils/LCSSA.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Utils/LoopSimplify.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Utils/LoopUtils.h \
@@ -432,7 +435,6 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
   /usr/include/c++/14/bits/unique_lock.h \
   /usr/include/c++/14/bits/unique_ptr.h \
   /usr/include/c++/14/bits/unordered_map.h \
-  /usr/include/c++/14/bits/unordered_set.h \
   /usr/include/c++/14/bits/uses_allocator.h \
   /usr/include/c++/14/bits/uses_allocator_args.h \
   /usr/include/c++/14/bits/utility.h \
@@ -492,7 +494,6 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
   /usr/include/c++/14/type_traits \
   /usr/include/c++/14/typeinfo \
   /usr/include/c++/14/unordered_map \
-  /usr/include/c++/14/unordered_set \
   /usr/include/c++/14/utility \
   /usr/include/c++/14/variant \
   /usr/include/c++/14/vector \
@@ -639,8 +640,6 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
 /usr/include/c++/14/bits/nested_exception.h:
 
 /usr/include/c++/14/bits/move.h:
-
-/usr/include/c++/14/bits/unordered_set.h:
 
 /usr/include/c++/14/bits/memoryfwd.h:
 
@@ -836,9 +835,11 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
 
 /usr/include/locale.h:
 
-/usr/include/x86_64-linux-gnu/asm/types.h:
+/usr/include/linux/types.h:
 
-/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/DenseMap.h:
+/usr/include/c++/14/bits/stl_tempbuf.h:
+
+/usr/include/linux/stddef.h:
 
 /usr/include/c++/14/bits/charconv.h:
 
@@ -852,6 +853,18 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/DebugLoc.h:
 
+/usr/include/c++/14/iterator:
+
+/usr/include/c++/14/bits/unique_ptr.h:
+
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/MC/MCExpr.h:
+
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Support/Casting.h:
+
+/usr/include/c++/14/bits/exception_ptr.h:
+
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Support/PointerLikeTypeTraits.h:
+
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/SetVector.h:
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/PassRegistry.h:
@@ -863,10 +876,6 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/Constants.h:
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/GlobalValue.h:
-
-/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/iterator_range.h:
-
-/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/ConstantFold.h:
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/DiagnosticInfo.h:
 
@@ -952,12 +961,6 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Analysis/InlineAdvisor.h:
 
-/usr/lib/llvm-20/lib/clang/20/include/__stddef_wchar_t.h:
-
-/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/GlobalIFunc.h:
-
-/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Support/AlignOf.h:
-
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/FunctionExtras.h:
 
 /usr/include/c++/14/new:
@@ -969,10 +972,6 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
 /usr/include/c++/14/bits/basic_string.tcc:
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/ADL.h:
-
-/usr/include/c++/14/bits/stl_tempbuf.h:
-
-/usr/include/linux/stddef.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/FILE.h:
 
@@ -988,6 +987,20 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Support/BranchProbability.h:
 
+/usr/lib/llvm-20/lib/clang/20/include/__stddef_wchar_t.h:
+
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/GlobalIFunc.h:
+
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Support/AlignOf.h:
+
+/usr/include/x86_64-linux-gnu/asm/types.h:
+
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/DenseMap.h:
+
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/ConstantFold.h:
+
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/iterator_range.h:
+
 /usr/include/c++/14/bits/stl_bvector.h:
 
 /usr/include/c++/14/bits/new_allocator.h:
@@ -998,17 +1011,15 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/User.h:
 
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Analysis/IVDescriptors.h:
+
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/BitVector.h:
+
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/ilist_base.h:
 
 /usr/include/c++/14/bits/shared_ptr_base.h:
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/Any.h:
-
-/usr/include/c++/14/cstdint:
-
-/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/InlineAsm.h:
-
-/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/PassAnalysisSupport.h:
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Support/RWMutex.h:
 
@@ -1058,6 +1069,10 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/SmallPtrSet.h:
 
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/DepthFirstIterator.h:
+
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/OperandTraits.h:
+
 /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h:
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/STLForwardCompat.h:
@@ -1079,8 +1094,6 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
 /usr/lib/llvm-20/lib/clang/20/include/__stddef_max_align_t.h:
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/MC/LaneBitmask.h:
-
-/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/BitVector.h:
 
 /usr/include/x86_64-linux-gnu/sys/single_threaded.h:
 
@@ -1230,9 +1243,11 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/ilist_node_options.h:
 
-/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Analysis/IVDescriptors.h:
+/usr/include/c++/14/cstdint:
 
-/usr/include/c++/14/unordered_set:
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/PassAnalysisSupport.h:
+
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/InlineAsm.h:
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/InstrTypes.h:
 
@@ -1268,8 +1283,6 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/Module.h:
 
-/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/OperandTraits.h:
-
 /usr/include/x86_64-linux-gnu/bits/stdlib-float.h:
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Analysis/TargetLibraryInfo.def:
@@ -1302,21 +1315,7 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/ValueMap.h:
 
-/usr/include/linux/types.h:
-
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/VectorBuilder.h:
-
-/usr/include/c++/14/iterator:
-
-/usr/include/c++/14/bits/unique_ptr.h:
-
-/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/MC/MCExpr.h:
-
-/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Support/Casting.h:
-
-/usr/include/c++/14/bits/exception_ptr.h:
-
-/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Support/PointerLikeTypeTraits.h:
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/MC/MCFixup.h:
 
@@ -1436,6 +1435,8 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
 
 /usr/include/c++/14/bits/stl_numeric.h:
 
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/Dominators.h:
+
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Support/ErrorOr.h:
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/ConstantRange.h:
@@ -1511,6 +1512,8 @@ CMakeFiles/LoopInvariantCodeMotion.dir/LoopInvariantCodeMotion.cpp.o: /home/alic
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Utils/LoopSimplify.h:
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Scalar/LoopPassManager.h:
+
+/home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Utils/BasicBlockUtils.h:
 
 /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Transforms/Utils/LoopUtils.h:
 

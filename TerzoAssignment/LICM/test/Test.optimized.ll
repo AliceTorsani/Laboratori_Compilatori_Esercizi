@@ -26,40 +26,40 @@ define dso_local i32 @main() #0 {
   %1 = alloca i32, align 4
   %2 = alloca [100 x i32], align 16
   store i32 0, ptr %1, align 4
-  br label %3
+  %3 = add nsw i32 10, 20
+  %4 = mul nsw i32 %3, 2
+  %5 = add nsw i32 %3, %4
+  %6 = add nsw i32 %4, 3
+  br label %7
 
-3:                                                ; preds = %23, %0
+7:                                                ; preds = %23, %0
   %.0 = phi i32 [ 0, %0 ], [ %24, %23 ]
-  %4 = icmp slt i32 %.0, 100
-  br i1 %4, label %5, label %25
+  %8 = icmp slt i32 %.0, 100
+  br i1 %8, label %9, label %25
 
-5:                                                ; preds = %3
-  %6 = add nsw i32 10, 20
-  %7 = mul nsw i32 %6, 2
-  %8 = add nsw i32 %6, %.0
-  %9 = call i32 @pure_function(i32 noundef 10)
-  %10 = call i32 @impure_function(ptr noundef %1)
-  %11 = getelementptr inbounds [100 x i32], ptr %2, i64 0, i64 0
-  %12 = load i32, ptr %11, align 16
-  %13 = add nsw i32 %6, %7
-  %14 = sext i32 %.0 to i64
-  %15 = getelementptr inbounds [100 x i32], ptr %2, i64 0, i64 %14
-  store i32 %13, ptr %15, align 4
-  %16 = add nsw i32 %7, 3
-  %17 = add nsw i32 %8, %10
-  %18 = add nsw i32 %17, %16
-  %19 = add nsw i32 %18, %9
-  %20 = add nsw i32 %19, %12
+9:                                                ; preds = %7
+  %10 = add nsw i32 %3, %.0
+  %11 = call i32 @pure_function(i32 noundef 10)
+  %12 = call i32 @impure_function(ptr noundef %1)
+  %13 = getelementptr inbounds [100 x i32], ptr %2, i64 0, i64 0
+  %14 = load i32, ptr %13, align 16
+  %15 = sext i32 %.0 to i64
+  %16 = getelementptr inbounds [100 x i32], ptr %2, i64 0, i64 %15
+  store i32 %5, ptr %16, align 4
+  %17 = add nsw i32 %10, %12
+  %18 = add nsw i32 %17, %6
+  %19 = add nsw i32 %18, %11
+  %20 = add nsw i32 %19, %14
   %21 = load i32, ptr %1, align 4
   %22 = add nsw i32 %21, %20
   store i32 %22, ptr %1, align 4
   br label %23
 
-23:                                               ; preds = %5
+23:                                               ; preds = %9
   %24 = add nsw i32 %.0, 1
-  br label %3, !llvm.loop !6
+  br label %7, !llvm.loop !6
 
-25:                                               ; preds = %3
+25:                                               ; preds = %7
   %26 = load i32, ptr %1, align 4
   %27 = call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef %26)
   ret i32 0
