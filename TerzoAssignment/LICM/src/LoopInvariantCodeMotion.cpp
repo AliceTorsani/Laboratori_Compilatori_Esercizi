@@ -36,6 +36,7 @@ struct LoopInvariantCodeMotion: PassInfoMixin<LoopInvariantCodeMotion>{
 
         // Iteriamo su tutti i loop top-level
         for (Loop *L : LI) {
+            outs() << "\n\n--------inizio loop--------\n\n";
             processLoop(L, DT, LI);
         }
 
@@ -80,6 +81,19 @@ struct LoopInvariantCodeMotion: PassInfoMixin<LoopInvariantCodeMotion>{
 
             // Scorriamo tutti i basic block del loop
             for (BasicBlock *BB : L->blocks()) {
+                
+                outs() << "\nblocco del loop: ";
+                BB->printAsOperand(outs(), false);
+                outs() << "\nil quale domina: ";
+                
+                SmallVector<BasicBlock*> discendenti;
+                DT.getDescendants(BB, discendenti);
+
+                for(auto c : discendenti) {
+                    outs() << "\n\t ⊢";
+                    c->printAsOperand(outs(), false);
+                }
+            
 
                 // Scorriamo tutte le istruzioni del blocco
                 for (Instruction &I : *BB) {
@@ -100,6 +114,7 @@ struct LoopInvariantCodeMotion: PassInfoMixin<LoopInvariantCodeMotion>{
                     }
                 }
             }
+            outs() << "\n\n--------fine loop--------\n\n";
         
 
         // DEBUG: stampa le istruzioni trovate
@@ -118,6 +133,9 @@ struct LoopInvariantCodeMotion: PassInfoMixin<LoopInvariantCodeMotion>{
 
         // Candidate da spostare
         std::vector<Instruction*> HoistCandidates;
+        //    1. vado a prendere ogni exit block del loop
+        SmallVector<BasicBlock*> exitBlocks;
+        L->getExitBlocks(exitBlocks);
 
         // Analizziamo tutte le invariant
         for (Instruction *I : InvariantInsts) {
@@ -127,17 +145,43 @@ struct LoopInvariantCodeMotion: PassInfoMixin<LoopInvariantCodeMotion>{
             // Dominanza su tutte le uscite
             //----------------------------------------------------
 
+            
+            
+            //riempio il vettore con tutti i blocchi dominati dal BB al quale appartiene l'istruzione corrente
+            SmallVector<BasicBlock*> discendenti;
+            DT.getDescendants(I->getParent(), discendenti);
+            
+            //controllo se ogni exitBlock è tra i discendenti del nodo
             bool dominatesExits = true;
+            //if (!DT.dominates(I->getParent(), ExitBB))
+            for(auto eB : exitBlocks) {
+                outs() << "exit block esaminato: ";
+                eB->printAsOperand(errs(), false);
+                
+                bool isEbInChild = false;
+                
+                //controllo se tra i discendenti del nodo corrente c'è l'exitBlock
+                for(auto dB : discendenti) {
+                    outs() << " con basic block: ";
+                    dB->printAsOperand(errs(), false);
+                    outs() << "\n\t\t\t ";
 
-            for (BasicBlock *ExitBB : ExitBlocks) {
 
-                // Il blocco contenente I deve dominare
-                // tutte le uscite del loop
-
-                if (!DT.dominates(I->getParent(), ExitBB)) {
-                    dominatesExits = false;
-                    break;
+                    if(dB == eB) { isEbInChild=true; break;}
                 }
+                if(!isEbInChild) { dominatesExits = false; } //TODO: break?
+            }
+
+            if(!dominatesExits) {
+                
+                outs() << "\nIstruzione il cui blocco NON domina tutte le uscite: ";
+                I->print(errs());
+                outs() << "\n";
+                
+            } else {
+                outs() << "\nIstruzione il cui blocco DOMINA tutte le uscite: ";
+                I->print(errs());
+                outs() << "\n";
             }
 
             //----------------------------------------------------
@@ -215,8 +259,34 @@ struct LoopInvariantCodeMotion: PassInfoMixin<LoopInvariantCodeMotion>{
                               HoistCandidates.end(),
                               &I) != HoistCandidates.end()) {
                     
-                    // Salva nel vettore temporaneo
-                    OrderedHoist.push_back(&I);
+                    // Si verifica che tutte le istruzioni invarianti da cui l'istruzione I dipende
+                    // sono state spostate (salvate in OrderedHoist)
+                    bool allGood = true;
+
+                    // Prende gli operandi dell'istruzione
+                    for(Value *Op : I.operands()) {
+                        
+                        // Se il valore dell'operando è definito da un'altra istruzione
+                        // risaliamo alla definizione di essa
+                        if (Instruction *OpInst = dyn_cast<Instruction>(Op)) {
+                            
+                            // Verifica se è già stata inserita tra le istruzioni da spostare
+                            // Se non si trova l'istruzione allora non è da inserire in OrderdHoist
+                            if (std::find(OrderedHoist.begin(), OrderedHoist.end(), OpInst) == OrderedHoist.end()) {
+                                outs() << "istruzione rimossa in fase finale: ";
+                                I.printAsOperand(outs());
+                                outs() << "\n-------\n";
+                                allGood = false;
+                            }
+                        }
+                    }
+                    
+                    // Se  tutte le istruzioni invarianti da cui l'istruzione I dipende
+                    // sono state spostate si sposta anch'essa
+                    if(allGood) {
+                        // Salva nel vettore temporaneo le istruzioni da spostare
+                        OrderedHoist.push_back(&I);
+                    }
                 }
             }
         }
