@@ -169,7 +169,7 @@ struct LoopInvariantCodeMotion: PassInfoMixin<LoopInvariantCodeMotion>{
 
                     if(dB == eB) { isEbInChild=true; break;}
                 }
-                if(!isEbInChild) { dominatesExits = false; } //TODO: break?
+                if(!isEbInChild) { dominatesExits = false; break;}
             }
 
             if(!dominatesExits) {
@@ -398,8 +398,10 @@ struct LoopInvariantCodeMotion: PassInfoMixin<LoopInvariantCodeMotion>{
                 // Se troviamo un uso fuori dal loop
                 // allora NON è dead.
 
-                if (!L->contains(UseInst))
+                if (!L->contains(UseInst)) {
+                    outs() << "\n\t-l'istuzione viene utilizzata al di fuori del loop\n";
                     return false;
+                }
             }
         }
 
