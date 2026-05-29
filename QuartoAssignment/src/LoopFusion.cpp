@@ -20,7 +20,7 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
   // Entry point del Function Pass
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM) {
 
-    errs() << "Running LoopFusionPass on function: "
+    outs() << "Running LoopFusionPass on function: "
                << F.getName() << "\n";
 
         // Recupera la loop tree della funzione
@@ -106,6 +106,21 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
         //----------------------------------------------------
         if (L0->isGuarded() && L1->isGuarded()) {
 
+            //----------------------------------------------------
+            // I due loop devono avere
+            // la stessa guardia
+            //----------------------------------------------------
+
+            if (!haveSameGuard(L0, L1)){
+                errs() << "I due loop non hanno la stessa guardia\n";
+                return false;
+            }
+
+            errs() << "I due loop hanno la stessa guardia\n";
+
+            //----------------------------------------------------
+            // Recupera la guardia del secondo loop
+            //----------------------------------------------------
             BranchInst *GuardBI1 = L1->getLoopGuardBranch();
 
             if (!GuardBI1)
@@ -115,21 +130,25 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
 
             // Il guard block del secondo loop deve essere "pulito"
             // Verifica assenza di istruzioni intermedie
-            if (!isSimpleGuardBlock(GuardBB))
+            if (!isSimpleGuardBlock(GuardBB)){
+                errs() <<"Il guard block del secondo loop non è pulito e ha istruzioni intermedie\n";
                 return false;
+            }
+
+            errs() << "Il guard block del secondo loop è pulito\n";
 
             // Verifica adiacenza CFG
 
-            BranchInst *GuardBI = L0->getLoopGuardBranch();
+            BranchInst *GuardBI0 = L0->getLoopGuardBranch();
 
-            if (!GuardBI)
+            if (!GuardBI0)
                 return false;
 
             
             BasicBlock *NonLoopSucc = nullptr;
 
-            // Cerca il successore NON interno al loop
-            for (BasicBlock *Succ : GuardBI->successors()) {
+            // Cerca il successore NON interno al loop L0
+            for (BasicBlock *Succ : GuardBI0->successors()) {
 
                 if (!L0->contains(Succ)) {
                     NonLoopSucc = Succ;
@@ -140,8 +159,10 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
             if (!NonLoopSucc)
                 return false;
 
-            // Deve puntare direttamente al loop successivo
-            return NonLoopSucc == L1->getHeader();
+            // Deve puntare direttamente al loop successivo:
+            // Il successore esterno di L0
+            // deve andare direttamente a L1 -> deve puntare alla guardia di L1
+            return NonLoopSucc == GuardBB;
         }
 
         //----------------------------------------------------
@@ -155,24 +176,34 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
         // SOLO il branch.
         //
         //----------------------------------------------------
+        if(!L0->isGuarded() && !L1->isGuarded()){
 
-        BasicBlock *ExitBlock = L0->getExitBlock();
+            BasicBlock *ExitBlock = L0->getExitBlock();
 
-        BasicBlock *Preheader =
-            L1->getLoopPreheader();
+            BasicBlock *Preheader =
+                L1->getLoopPreheader();
 
-        if (!ExitBlock || !Preheader)
-            return false;
+            if (!ExitBlock || !Preheader)
+                return false;
 
-        // Verifica adiacenza CFG
-        if (ExitBlock != Preheader)
-            return false;
+            // Verifica adiacenza CFG
+            if (ExitBlock != Preheader)
+                return false;
 
-        // Verifica assenza di istruzioni intermedie nel preheader del secondo loop
-        if (!isEmptyPreheader(Preheader))
-            return false;
+            // Verifica assenza di istruzioni intermedie nel preheader del secondo loop
+            if (!isEmptyPreheader(Preheader)){
+                errs() << "Ci sono istruzioni intermedie nel preheader del secondo loop\n";
+                return false;
+            }
 
-        return true;
+            errs() << "Il preheader del secondo loop è pulito: non ci sono istruzioni intermedie\n";
+
+            return true;
+        }
+
+        // Caso in cui ho un loop guarded e uno non guarded, non possono essere fusi
+        errs() << "Ho trovato un loop guarded e uno non guarded, non possono essere fusi\n";
+        return false;
     }
 
     //========================================================
@@ -259,7 +290,64 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
         return true;
     }
 
+    //========================================================
+    // Verifica che due loop guarded
+    // abbiano la stessa guardia
+    //========================================================
+    //
+    // Due loop guarded hanno la stessa guardia se:
+    //
+    // 1. hanno lo stesso branch di guardia
+    //
+    // oppure
+    //
+    // 2. il branch usa la stessa condition
+    //
+    //========================================================
+    bool haveSameGuard(Loop *L0, Loop *L1) {
 
+        // Entrambi devono essere guarded
+        if (!L0->isGuarded() || !L1->isGuarded())
+            return false;
+
+        //----------------------------------------------------
+        // Recupera i branch di guardia
+        //----------------------------------------------------
+
+        BranchInst *GuardBI0 =
+            L0->getLoopGuardBranch();
+
+        BranchInst *GuardBI1 =
+            L1->getLoopGuardBranch();
+
+        if (!GuardBI0 || !GuardBI1)
+            return false;
+
+        //----------------------------------------------------
+        // Caso 1:
+        // stesso identico BranchInst
+        //----------------------------------------------------
+
+        if (GuardBI0 == GuardBI1)
+            return true;
+
+        //----------------------------------------------------
+        // Caso 2:
+        // stessa condition
+        //----------------------------------------------------
+
+        Value *Cond0 = GuardBI0->getCondition();
+        Value *Cond1 = GuardBI1->getCondition();
+
+        if (Cond0 == Cond1)
+            return true;
+
+        //----------------------------------------------------
+        // Guardie differenti
+        //----------------------------------------------------
+
+        return false;
+    }
 
     static bool isRequired() { return true; }
 };  
