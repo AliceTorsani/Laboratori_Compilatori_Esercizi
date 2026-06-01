@@ -15,6 +15,11 @@ using namespace llvm;
 namespace {
 
 // New PM implementation
+// Prima di eseguite il passo, eseguire nella cartella /test:
+// opt -passes="loop-simplify,loop-rotate" Test.m2r.ll -S -o Test.simplified.ll
+// Dopodichè eseguire il passo 
+// Invocare il passo nella cartella /test nel seguente modo:
+// opt -S -load-pass-plugin ../build/libLoopFusion.so -p my-loop-fusion Test.simplified.ll -o Test.optimized.ll 
 struct LoopFusion: PassInfoMixin<LoopFusion> {
 
   // Entry point del Function Pass
@@ -106,6 +111,7 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
         //----------------------------------------------------
         if (L0->isGuarded() && L1->isGuarded()) {
 
+            errs() << "caso 1: i due loop sono guarded\n";
             //----------------------------------------------------
             // I due loop devono avere
             // la stessa guardia
@@ -177,6 +183,8 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
         //
         //----------------------------------------------------
         if(!L0->isGuarded() && !L1->isGuarded()){
+
+            errs() <<"caso 2: i due loop non sono guarded\n";
 
             BasicBlock *ExitBlock = L0->getExitBlock();
 
@@ -362,7 +370,7 @@ llvm::PassPluginLibraryInfo getLoopFusionPluginInfo() {
             PB.registerPipelineParsingCallback(
                 [](StringRef Name, FunctionPassManager &FPM,
                    ArrayRef<PassBuilder::PipelineElement>) {
-                  if (Name == "loop-fusion") {
+                  if (Name == "my-loop-fusion") {
                     FPM.addPass(LoopFusion());
                     return true;
                   }
@@ -373,7 +381,7 @@ llvm::PassPluginLibraryInfo getLoopFusionPluginInfo() {
 
 // This is the core interface for pass plugins. It guarantees that 'opt' will
 // be able to recognize LoopFusion when added to the pass pipeline on the
-// command line, i.e. via '-passes=loop-fusion'
+// command line, i.e. via '-passes=my-loop-fusion'
 extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo
 llvmGetPassPluginInfo() {
   return getLoopFusionPluginInfo();

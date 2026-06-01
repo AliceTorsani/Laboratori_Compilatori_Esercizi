@@ -1,4 +1,4 @@
-; ModuleID = 'Test.simplified.ll'
+; ModuleID = 'Test.m2r.ll'
 source_filename = "Test.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
@@ -11,7 +11,7 @@ define dso_local void @test_fusion_success(ptr noundef %0, ptr noundef %1, ptr n
 .lr.ph:                                           ; preds = %4
   br label %6
 
-6:                                                ; preds = %13, %.lr.ph
+6:                                                ; preds = %.lr.ph, %13
   %.011 = phi i32 [ 0, %.lr.ph ], [ %14, %13 ]
   %7 = sext i32 %.011 to i64
   %8 = getelementptr inbounds i32, ptr %1, i64 %7
@@ -37,7 +37,7 @@ define dso_local void @test_fusion_success(ptr noundef %0, ptr noundef %1, ptr n
 .lr.ph4:                                          ; preds = %16
   br label %18
 
-18:                                               ; preds = %25, %.lr.ph4
+18:                                               ; preds = %.lr.ph4, %25
   %.02 = phi i32 [ 0, %.lr.ph4 ], [ %26, %25 ]
   %19 = sext i32 %.02 to i64
   %20 = getelementptr inbounds i32, ptr %0, i64 %19
@@ -68,7 +68,7 @@ define dso_local void @test_fusion_fail_adjacency(ptr noundef %0, ptr noundef %1
 .lr.ph:                                           ; preds = %4
   br label %6
 
-6:                                                ; preds = %13, %.lr.ph
+6:                                                ; preds = %.lr.ph, %13
   %.011 = phi i32 [ 0, %.lr.ph ], [ %14, %13 ]
   %7 = sext i32 %.011 to i64
   %8 = getelementptr inbounds i32, ptr %1, i64 %7
@@ -96,7 +96,7 @@ define dso_local void @test_fusion_fail_adjacency(ptr noundef %0, ptr noundef %1
 .lr.ph4:                                          ; preds = %16
   br label %19
 
-19:                                               ; preds = %26, %.lr.ph4
+19:                                               ; preds = %.lr.ph4, %26
   %.02 = phi i32 [ 0, %.lr.ph4 ], [ %27, %26 ]
   %20 = sext i32 %.02 to i64
   %21 = getelementptr inbounds i32, ptr %0, i64 %20
