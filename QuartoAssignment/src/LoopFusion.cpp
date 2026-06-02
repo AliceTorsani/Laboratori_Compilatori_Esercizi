@@ -53,10 +53,13 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
     void processLoopSiblings(ArrayRef<Loop *> Loops) {
 
         // Controlla coppie consecutive di siblings
-        for (unsigned i = 0; i + 1 < Loops.size(); ++i) {
+        //for (unsigned i = 0; i + 1 < Loops.size(); ++i) {
+        if (Loops.size() >= 2) {
+        for (int i = (int)Loops.size()-1; i > 0; --i) {
 
             Loop *L0 = Loops[i];
-            Loop *L1 = Loops[i + 1];
+            //Loop *L1 = Loops[i + 1];
+            Loop *L1 = Loops[i - 1];
 
             errs() << "Checking adjacency between:\n";
             errs() << "  L0 header: ";
@@ -75,10 +78,12 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
                 errs() << "  --> NOT adjacent\n";
             }
         }
+        }
 
         // Ricorsione sui subloops
         for (Loop *L : Loops) {
-            processLoopSiblings(L->getSubLoops());
+            if(L->getSubLoops().size() != 0)
+                processLoopSiblings(L->getSubLoops());
         }
     }
 
@@ -347,7 +352,7 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
         Value *Cond0 = GuardBI0->getCondition();
         Value *Cond1 = GuardBI1->getCondition();
 
-        if (Cond0 == Cond1)
+        if (sameCondition(Cond0, Cond1))
             return true;
 
         //----------------------------------------------------
@@ -355,6 +360,21 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
         //----------------------------------------------------
 
         return false;
+    }
+
+    bool sameCondition(Value *V0, Value *V1) {
+
+        auto *Cmp0 = dyn_cast<ICmpInst>(V0);
+        auto *Cmp1 = dyn_cast<ICmpInst>(V1);
+
+        if (!Cmp0 || !Cmp1)
+            return false;
+
+        if (Cmp0->getPredicate() != Cmp1->getPredicate())
+            return false;
+
+        return Cmp0->getOperand(0) == Cmp1->getOperand(0) &&
+            Cmp0->getOperand(1) == Cmp1->getOperand(1);
     }
 
     static bool isRequired() { return true; }
