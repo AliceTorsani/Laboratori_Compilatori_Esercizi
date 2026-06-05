@@ -45,9 +45,7 @@ void dirty_preheader(int *A, int *B, int *C, int n) {
 
 //====================================================
 // CASE 4
-// GUARDED
-// STESSA GUARDIA
-// GUARDIA PULITA
+// NON GUARDED
 //
 // Deve essere FONDIBILE
 //====================================================
@@ -67,7 +65,7 @@ void guarded_same_guard(int *A, int *B, int n) {
 
 //====================================================
 // CASE 7
-// GUARDED
+// NON GUARDED
 // BASIC BLOCK INTERMEDIO
 //
 // NON fondibile
@@ -94,15 +92,15 @@ void guarded_intermediate_block(int *A, int *B, int n) {
 //-----------------------------------------------------
 // CASO 8
 //
-// do-while seguito da un loop guarded
+// do-while seguito da un loop non guarded
 //
 // Il primo loop NON è guarded.
-// Il secondo loop è guarded.
+// Il secondo loop NON è guarded.
 //
 // Deve entrare nel caso:
 //
 //   L0 non guarded
-//   L1 guarded
+//   L1 non guarded
 //-----------------------------------------------------
 void do_while_then_guarded(int *A, int *B, int n) {
 
@@ -187,15 +185,13 @@ void guarded_do_while_then_plain_do_while(
 //-----------------------------------------------------
 // CASO 11
 //
-// due do-while con la stessa guardia
+// due do-while non guarded
 //
 // Deve entrare nel caso:
 //
-//   L0 guarded
-//   L1 guarded
+//   L0 non guarded
+//   L1 non guarded
 //
-// e haveSameGuard() dovrebbe risultare vero
-// (a seconda di come implementi il confronto).
 //-----------------------------------------------------
 void two_guarded_do_whiles_same_guard(
     int *A,

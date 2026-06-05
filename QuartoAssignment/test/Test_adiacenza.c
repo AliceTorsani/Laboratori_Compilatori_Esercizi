@@ -66,9 +66,7 @@ void dirty_preheader(int *A, int *B, int *C, int n) {
 
 //====================================================
 // CASE 4
-// GUARDED
-// STESSA GUARDIA
-// GUARDIA PULITA
+// NON GUARDED
 //
 // Deve essere FONDIBILE
 //====================================================
@@ -88,8 +86,7 @@ void guarded_same_guard(int *A, int *B, int n) {
 
 //====================================================
 // CASE 5
-// GUARDED
-// GUARDIE DIVERSE
+// NON GUARDED
 //
 // NON fondibile
 //====================================================
@@ -112,12 +109,9 @@ void guarded_different_guards(int *A, int *B, int n) {
 
 //====================================================
 // CASE 6
-// GUARDED
-// GUARD BLOCK SPORCO
+// NON GUARDED
 //
-// computation nella guardia
-//
-// NON fondibile
+// fondibile
 //====================================================
 void guarded_dirty_guard(int *A, int *B, int n) {
 
@@ -137,7 +131,7 @@ void guarded_dirty_guard(int *A, int *B, int n) {
 
 //====================================================
 // CASE 7
-// GUARDED
+// NON GUARDED
 // BASIC BLOCK INTERMEDIO
 //
 // NON fondibile
@@ -187,6 +181,7 @@ void nested_siblings(int *A, int *B, int *C) {
 // NESTED MA NON SIBLINGS
 //
 // NON devono essere considerati
+// Verranno fusi i due loop allo stesso livello
 //====================================================
 void nested_non_siblings(int *A, int *B) {
 

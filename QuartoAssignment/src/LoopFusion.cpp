@@ -9,8 +9,17 @@
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/Analysis/ScalarEvolution.h"
+
+#include "llvm/Transforms/Utils/LoopSimplify.h"
+
+#include <algorithm>
+
 
 using namespace llvm;
+
+//TODO controllare che ci sia un solo exit block -> fatto
+//TODO controllare quando viene controllato il preheader
 
 namespace {
 
@@ -20,25 +29,36 @@ namespace {
 // Dopodichè eseguire il passo 
 // Invocare il passo nella cartella /test nel seguente modo:
 // opt -S -load-pass-plugin ../build/libLoopFusion.so -p my-loop-fusion Test.simplified.ll -o Test.optimized.ll 
+//
+// IMPORTANTE: NON USARE LOOP-ROTATE
+//
+// Invocare il passo nella cartella /test nel seguente modo:
+// opt -S -load-pass-plugin ../build/libLoopFusion.so -p my-loop-fusion Test.m2r.ll -o Test.optimized.ll 
 struct LoopFusion: PassInfoMixin<LoopFusion> {
 
   // Entry point del Function Pass
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM) {
 
-    outs() << "Running LoopFusionPass on function: "
-               << F.getName() << "\n";
+    outs() << "\n------------------------\nRunning LoopFusionPass on function: "
+               << F.getName() << "\n--------------\n";
 
         // Recupera la loop tree della funzione
         LoopInfo &LI = AM.getResult<LoopAnalysis>(F);
+        ScalarEvolution &SE = AM.getResult<ScalarEvolutionAnalysis>(F);
 
         // Inizia dai top-level loops
-        processLoopSiblings(LI.getTopLevelLoops());
+        std::vector<Loop*> topLevelLoops = LI.getTopLevelLoops();
+        
+        if(topLevelLoops.size() > 0)
+            std::reverse(topLevelLoops.begin(), topLevelLoops.end());
+            processLoopSiblings(topLevelLoops, SE);
 
 
     return PreservedAnalyses::all();
   }
 
   private:
+    bool verbose = true;
 
     //========================================================
     // Visita ricorsiva dei siblings
@@ -47,27 +67,62 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
     // Questa funzione:
     //
     // 1. controlla i loop consecutivi allo stesso livello
-    // 2. visita ricorsivamente i subloops
+    // 2. calcola i trip count per ogni coppia
+    // 3. visita ricorsivamente i subloops
     //
     //========================================================
-    void processLoopSiblings(ArrayRef<Loop *> Loops) {
+    void processLoopSiblings(ArrayRef<Loop *> Loops, ScalarEvolution &SE) {
+        // if (verbose) outs() << "number of loops in the function: " << Loops.size() << "\n";
+
+        // Vengono tenuti gli indici dei loop che sono stati fusi, durante l'iterazione si controlla che l'indice che si sta per scegliere sia differente da uno in questa lista
 
         // Controlla coppie consecutive di siblings
-        //for (unsigned i = 0; i + 1 < Loops.size(); ++i) {
-        if (Loops.size() >= 2) {
-        for (int i = (int)Loops.size()-1; i > 0; --i) {
+        for (unsigned i = 0; i+1 < Loops.size(); ++i) {
+            // if (1) outs() << "indexes: " << i << ", " << i-1 << "\n";
 
             Loop *L0 = Loops[i];
-            //Loop *L1 = Loops[i + 1];
-            Loop *L1 = Loops[i - 1];
 
-            errs() << "Checking adjacency between:\n";
-            errs() << "  L0 header: ";
-                   L0->getHeader()->printAsOperand(outs(), false);
-                   errs() << "\n";
-            errs() << "  L1 header: ";
-                   L1->getHeader()->printAsOperand(outs(), false);
-                   errs() << "\n";
+            Loop *L1 = Loops[i + 1];
+
+            // Controllo che L0 abbia un solo exit block e un solo exiting block
+            // Un solo exiting block
+            bool L0HasOneExitingBlock = true;
+            SmallVector<BasicBlock *, 4> ExitingBlocks;
+            L0->getExitingBlocks(ExitingBlocks);
+
+            if (ExitingBlocks.size() != 1){
+                // Ne ha più di uno
+                L0HasOneExitingBlock = false;
+            }
+            // Un solo exit block
+            bool L0HasOneExitBlock = true;
+            SmallVector<BasicBlock *, 4> ExitBlocks;
+            L0->getExitBlocks(ExitBlocks);
+
+            if (ExitBlocks.size() != 1){
+                // Ne ha più di uno
+                L0HasOneExitBlock = false;
+            }
+                
+
+            if(verbose) {
+                errs() << "Checking adjacency between:\n";
+                errs() << "  L0 header: ";
+                    L0->getHeader()->printAsOperand(outs(), false);
+                    errs() << "\n";
+                errs() << "  L1 header: ";
+                    L1->getHeader()->printAsOperand(outs(), false);
+                    errs() << "\n";
+
+                if (L0HasOneExitingBlock){
+                    errs() << "\tl'exiting block di L0: ";
+                        L0->getExitingBlock()->printAsOperand(outs(), false);
+                        errs() << "\n";
+                }
+                else{
+                    errs() << "L0 ha più di un exiting block\n";
+                }
+            }
 
             if (areAdjacent(L0, L1)) {
 
@@ -77,13 +132,31 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
 
                 errs() << "  --> NOT adjacent\n";
             }
-        }
+            
+
+            // CALCOLO DEL TRIP COUNT DEI LOOP
+            bool sameTripCount = false;
+            //A better measure is the backedge-taken count, which is the number of times any of the backedges is taken before the loop. It is one less than the trip count for executions that enter the header.
+            const SCEV* tripCountL0 = SE.getBackedgeTakenCount(L0);
+            const SCEV* tripCountL1 = SE.getBackedgeTakenCount(L1);
+            
+            
+            
+            
+            if(verbose) {outs() << "\n---CONTROLLO TRIP COUNT---\n";}
+            
+            if (tripCountL0 != tripCountL1){
+                outs() << "numero di esecuzioni differente\n";
+            } else {
+                outs() << "i loop vengono eseguiti lo stesso numero di volte" << "\n";
+                sameTripCount = true;
+            }
         }
 
         // Ricorsione sui subloops
         for (Loop *L : Loops) {
             if(L->getSubLoops().size() != 0)
-                processLoopSiblings(L->getSubLoops());
+                processLoopSiblings(L->getSubLoops(), SE);
         }
     }
 
@@ -102,6 +175,11 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
         if (!L0 || !L1)
             return false;
 
+        if(verbose) {
+            outs() << "Il loop L0 è guarded? " << L0->isGuarded() << "\n";
+            outs() << "Il loop L1 è guarded? " << L1->isGuarded() << "\n";
+            
+        }
         //----------------------------------------------------
         // CASO 1: loop guarded
         //----------------------------------------------------
@@ -123,7 +201,8 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
             //----------------------------------------------------
 
             if (!haveSameGuard(L0, L1)){
-                errs() << "I due loop non hanno la stessa guardia\n";
+                
+                errs() << "I due loop non hanno la stessa guardia:\n\t";
                 return false;
             }
 
@@ -191,13 +270,38 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
 
             errs() <<"caso 2: i due loop non sono guarded\n";
 
+            // Controllo che L0 abbia un solo exit block
+            bool L0HasOneExitBlock = true;
+            SmallVector<BasicBlock *, 4> ExitBlocks;
+            L0->getExitBlocks(ExitBlocks);
+
+            if (ExitBlocks.size() != 1){
+                // Ne ha più di uno
+                L0HasOneExitBlock = false;
+            }
+
+            if (L0HasOneExitBlock == false){
+                outs() << "L0 ha più di un exit block, non posso eseguire la fusione\n";
+                return false;
+            }
+
             BasicBlock *ExitBlock = L0->getExitBlock();
+            if (verbose) {
+                outs() << "\texit block LO: ";
+                ExitBlock->printAsOperand(outs(), false);
+                errs() << "\n";
+            }
 
             BasicBlock *Preheader =
                 L1->getLoopPreheader();
-
-            if (!ExitBlock || !Preheader)
+            
+            if (!ExitBlock)
                 return false;
+            
+            // Se il loop non ha preheader controllo l'adiacenza con l'header
+            if(!Preheader) {
+                Preheader=L1->getHeader();
+            }
 
             // Verifica adiacenza CFG
             if (ExitBlock != Preheader)
@@ -318,7 +422,8 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
     //
     //========================================================
     bool haveSameGuard(Loop *L0, Loop *L1) {
-
+        if(verbose) outs() << "\n---CONTROLLO GUARDIE---\n";
+        
         // Entrambi devono essere guarded
         if (!L0->isGuarded() || !L1->isGuarded())
             return false;
@@ -351,30 +456,50 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
 
         Value *Cond0 = GuardBI0->getCondition();
         Value *Cond1 = GuardBI1->getCondition();
+        
+        if(verbose) { outs() << "\tcondizione 1: "; Cond0->print(outs()); 
+                outs() << "\n\tcondizione 2: "; Cond1->print(outs()); outs() << "\n";}
+            
+        //----------------------------------------------------
+        // Caso 3:
+        // condition equivalenti
+        //----------------------------------------------------
+        //cast a istruzione delle condizioni
+        if(ICmpInst* CondInst0 = dyn_cast<ICmpInst>(Cond0)) {
+            if(ICmpInst* CondInst1 = dyn_cast<ICmpInst>(Cond1)) {
 
-        if (sameCondition(Cond0, Cond1))
-            return true;
+                // stesso operando
+                if(CondInst0->getPredicate() == CondInst1->getPredicate()) {
+                    
+                    //stessi registri -> sono equivalenti
+                    if((CondInst0->getOperand(0) == CondInst1->getOperand(0)) &&
+                    (CondInst0->getOperand(1) == CondInst1->getOperand(1))) {
+                        
+                        if(verbose){outs() << "corrispondono\n";}
+                        
+                        return true;
+                    }
+                }
+                //operando complementare all'altro (>= e <=)
+                if(CondInst0->getPredicate() == CondInst1->getSwappedPredicate()) {
+                    
+                    //registri apeculari -> sono equivalenti
+                    if((CondInst0->getOperand(0) == CondInst1->getOperand(1)) &&
+                    (CondInst0->getOperand(1) == CondInst1->getOperand(0))) {
+                        
+                        if(verbose){outs() << "sono equivalenti\n";}
+                        
+                        return true;
+                    }
+                }
+            }
+        }
 
         //----------------------------------------------------
         // Guardie differenti
         //----------------------------------------------------
 
         return false;
-    }
-
-    bool sameCondition(Value *V0, Value *V1) {
-
-        auto *Cmp0 = dyn_cast<ICmpInst>(V0);
-        auto *Cmp1 = dyn_cast<ICmpInst>(V1);
-
-        if (!Cmp0 || !Cmp1)
-            return false;
-
-        if (Cmp0->getPredicate() != Cmp1->getPredicate())
-            return false;
-
-        return Cmp0->getOperand(0) == Cmp1->getOperand(0) &&
-            Cmp0->getOperand(1) == Cmp1->getOperand(1);
     }
 
     static bool isRequired() { return true; }
@@ -401,7 +526,7 @@ llvm::PassPluginLibraryInfo getLoopFusionPluginInfo() {
 
 // This is the core interface for pass plugins. It guarantees that 'opt' will
 // be able to recognize LoopFusion when added to the pass pipeline on the
-// command line, i.e. via '-passes=my-loop-fusion'
+// command line, i.e. via '-passes=loop-fusion'
 extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo
 llvmGetPassPluginInfo() {
   return getLoopFusionPluginInfo();
