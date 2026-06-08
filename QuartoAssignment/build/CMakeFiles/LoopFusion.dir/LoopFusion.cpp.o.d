@@ -497,4 +497,7 @@ CMakeFiles/LoopFusion.dir/LoopFusion.cpp.o: \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/Comdat.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/GlobalAlias.h \
   /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/GlobalIFunc.h \
-  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/ProfileSummary.h
+  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/ProfileSummary.h \
+  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/IR/Dominators.h \
+  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/ADT/DepthFirstIterator.h \
+  /home/alice/Scrivania/LLVM-19.1.7-Linux-X64/include/llvm/Analysis/PostDominators.h

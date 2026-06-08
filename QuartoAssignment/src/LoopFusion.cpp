@@ -11,6 +11,9 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 
+#include "llvm/IR/Dominators.h"
+#include "llvm/Analysis/PostDominators.h"
+
 #include "llvm/Transforms/Utils/LoopSimplify.h"
 
 #include <algorithm>
@@ -46,12 +49,16 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
         LoopInfo &LI = AM.getResult<LoopAnalysis>(F);
         ScalarEvolution &SE = AM.getResult<ScalarEvolutionAnalysis>(F);
 
+        // Recupero l'albero delle dipendenze e delle post-dipendenze
+        DominatorTree &DT = AM.getResult<DominatorTreeAnalysis>(F);
+        PostDominatorTree &PDT = AM.getResult<PostDominatorTreeAnalysis>(F);
+
         // Inizia dai top-level loops
         std::vector<Loop*> topLevelLoops = LI.getTopLevelLoops();
         
         if(topLevelLoops.size() > 0)
             std::reverse(topLevelLoops.begin(), topLevelLoops.end());
-            processLoopSiblings(topLevelLoops, SE);
+            processLoopSiblings(topLevelLoops, SE, DT, PDT);
 
 
     return PreservedAnalyses::all();
@@ -71,7 +78,7 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
     // 3. visita ricorsivamente i subloops
     //
     //========================================================
-    void processLoopSiblings(ArrayRef<Loop *> Loops, ScalarEvolution &SE) {
+    void processLoopSiblings(ArrayRef<Loop *> Loops, ScalarEvolution &SE, DominatorTree &DT, PostDominatorTree &PDT) {
         // if (verbose) outs() << "number of loops in the function: " << Loops.size() << "\n";
 
         // Vengono tenuti gli indici dei loop che sono stati fusi, durante l'iterazione si controlla che l'indice che si sta per scegliere sia differente da uno in questa lista
@@ -151,12 +158,26 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
                 outs() << "i loop vengono eseguiti lo stesso numero di volte" << "\n";
                 sameTripCount = true;
             }
+
+
+            // Controllo control flow equivalenza
+            if (verbose) errs()<<"\n---CONTROLLO CONTROL FLOW ---\n";
+            bool ControlFlowEquivalent = areLoopsControlFlowEquivalent(L0, L1, DT, PDT);
+
+            if (ControlFlowEquivalent){
+                outs() << "I due loop sono control flow equivalenti: se esegue uno, esegue anche l'altro\n";
+            }
+            else {
+                outs() << "I due loop NON sono control flow equivalenti\n";
+            }
+
+
         }
 
         // Ricorsione sui subloops
         for (Loop *L : Loops) {
             if(L->getSubLoops().size() != 0)
-                processLoopSiblings(L->getSubLoops(), SE);
+                processLoopSiblings(L->getSubLoops(), SE, DT, PDT);
         }
     }
 
@@ -501,6 +522,20 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
 
         return false;
     }
+
+    //========================================================
+    // Controllo che abbiano il control flow equivalente
+    // Analisi di dominanza e postdominanza
+    // I due loop devono essere control flow equivalenti:
+    // quando uno dei due loop esegue, deve eseguire anche l'altro
+    //========================================================
+    bool areLoopsControlFlowEquivalent(Loop *L0, Loop *L1, DominatorTree &DT, PostDominatorTree &PDT) {
+        BasicBlock *HeaderL0 = L0->getHeader();
+        BasicBlock *HeaderL1 = L1->getHeader();
+
+        return DT.dominates(HeaderL0, HeaderL1) && PDT.dominates(HeaderL1, HeaderL0);
+    }
+
 
     static bool isRequired() { return true; }
 };  
