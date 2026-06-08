@@ -10,6 +10,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/ScalarEvolutionExpressions.h"
 
 #include "llvm/IR/Dominators.h"
 #include "llvm/Analysis/PostDominators.h"
@@ -42,16 +43,82 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
   // Entry point del Function Pass
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM) {
 
+    // Copy propagation per il punto 2 
+    // Recupero l'albero delle dipendenze e delle post-dipendenze
+    DominatorTree &DT = AM.getResult<DominatorTreeAnalysis>(F);
+    PostDominatorTree &PDT = AM.getResult<PostDominatorTreeAnalysis>(F);
+
+    // itero su ogni istruzione
+    for (auto BBIter = F.begin(); BBIter != F.end(); ++BBIter) {
+        BasicBlock &B = *BBIter;
+        ICmpInst* CondInst;
+        for (auto InstIter = B.begin(); InstIter != B.end(); ++InstIter) {
+            Instruction &I = *InstIter;
+            
+            // cerco delle branch
+            if(BranchInst *branch = dyn_cast<BranchInst>(&I)) {
+                // se sono condizionali e al momento ho una Condizione di uguaglianza salvata
+                if (CondInst != nullptr && branch->isConditional()) {
+
+                    // e la condizione del branch è quelle che ho salvato
+                    if(branch->getCondition() == CondInst){
+                        outs() << "trovata l'istruzione di branch relativa all'uguaglianza: ";
+                        branch->print(outs(), false);
+                        outs() << "\n";
+
+                        //prendo gli usi di var1 all'interno dell'IF e li sostituisco con var0
+                        SmallVector<BasicBlock*> dominatedByThisCondition;
+                        DT.getDescendants(branch->getSuccessor(0), dominatedByThisCondition);
+                        
+                        //per ogni istruzione nei blocchi dominati dall'IF
+                        for(auto dbt : dominatedByThisCondition) {
+                            for( Instruction &dInst : *dbt) {
+
+                                //Controllo se è tra gli user dell'operando
+                                for( User *opUse : CondInst->getOperand(1)->users()) {
+                                    if(Instruction *UserInst = dyn_cast<Instruction>(opUse)) {
+                                        if (&dInst == UserInst && &dInst != CondInst) {
+
+                                            //E nel caso sotituisco i suoi usi di op1 con op0 (relativi all'if)
+                                            outs() << "l'istruzione passa da : ";
+                                            dInst.print(outs(), false);
+                                            dInst.replaceUsesOfWith(CondInst->getOperand(1), CondInst->getOperand(0));
+                                            outs() << "\na : ";
+                                            dInst.print(outs(), false);
+                                            outs() << "\n";
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            //ricerco delle IF
+            if (isa<ICmpInst>(&I)) {
+                CondInst = dyn_cast<ICmpInst>(&I);
+
+                // e controllo che siano uguaglianze
+                if (CondInst->getPredicate() == CmpInst::Predicate::ICMP_EQ) {
+                    outs() << "\n-quick copy propagation: \n";
+                    CondInst->print(outs(), false);
+                    outs() << "<- questa istruzione è un'uguaglianza\n";
+                } else {
+                    CondInst = nullptr;
+                }
+            }
+        }
+    }
+
+
     outs() << "\n------------------------\nRunning LoopFusionPass on function: "
                << F.getName() << "\n--------------\n";
 
         // Recupera la loop tree della funzione
         LoopInfo &LI = AM.getResult<LoopAnalysis>(F);
         ScalarEvolution &SE = AM.getResult<ScalarEvolutionAnalysis>(F);
-
-        // Recupero l'albero delle dipendenze e delle post-dipendenze
-        DominatorTree &DT = AM.getResult<DominatorTreeAnalysis>(F);
-        PostDominatorTree &PDT = AM.getResult<PostDominatorTreeAnalysis>(F);
 
         // Inizia dai top-level loops
         std::vector<Loop*> topLevelLoops = LI.getTopLevelLoops();
@@ -66,6 +133,32 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
 
   private:
     bool verbose = true;
+
+    //========================================================
+    // Normalizza il Trip Count in base alla struttura del loop
+    // (Top-Tested vs Bottom-Tested)
+    //========================================================
+    const SCEV *normalizeTripCount(Loop *L, const SCEV *TC, ScalarEvolution &SE) {
+        if (isa<SCEVCouldNotCompute>(TC)) 
+            return TC;
+
+        BasicBlock *ExitingBlock = L->getExitingBlock();
+        BasicBlock *LatchBlock = L->getLoopLatch();
+
+        // Se il blocco di uscita coincide con il Latch, è un do-while (bottom-tested)
+        // Aggiungiamo matematicamente 1 al BackedgeTakenCount per ottenere i giri reali
+        if (ExitingBlock && LatchBlock && ExitingBlock == LatchBlock) {
+            // Creiamo la costante SCEV '1' con lo stesso tipo (es. i32 o i64) del Trip Count
+            const SCEV *One = SE.getOne(TC->getType());
+            // Restituiamo (TC + 1)
+            return SE.getAddExpr(TC, One);
+        }
+
+        // Se il blocco di uscita è l'Header (for/while classico), 
+        // il conto restituito da SCEV è già pari alle iterazioni reali.
+        return TC;
+    }
+
 
     //========================================================
     // Visita ricorsiva dei siblings
@@ -144,12 +237,46 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
             // CALCOLO DEL TRIP COUNT DEI LOOP
             bool sameTripCount = false;
             //A better measure is the backedge-taken count, which is the number of times any of the backedges is taken before the loop. It is one less than the trip count for executions that enter the header.
-            const SCEV* tripCountL0 = SE.getBackedgeTakenCount(L0);
-            const SCEV* tripCountL1 = SE.getBackedgeTakenCount(L1);
-            
-            
-            
-            
+            if(SE.hasLoopInvariantBackedgeTakenCount(L0) && SE.hasLoopInvariantBackedgeTakenCount(L1)) {
+                const SCEV* tripCountL0 = SE.getBackedgeTakenCount(L0);
+                const SCEV* tripCountL1 = SE.getBackedgeTakenCount(L1);
+                
+                // Normalizziamo i Trip Count in base alla struttura dei loop
+                tripCountL0 = normalizeTripCount(L0, tripCountL0, SE);
+                tripCountL1 = normalizeTripCount(L1, tripCountL1, SE);
+                
+                if(verbose) {outs() << "\n---CONTROLLO TRIP COUNT---\n";}
+                if (isa<SCEVCouldNotCompute>(tripCountL0) || isa<SCEVCouldNotCompute>(tripCountL1)) {
+                    if (verbose) errs() << "Impossibile calcolare il Trip Count per L0 o L1.\n";
+                } else {
+                    if (tripCountL0 == tripCountL1) {
+                        sameTripCount = true;
+                        if (verbose) errs() << "I due loop hanno lo stesso Trip Count esatto (Puntatori SCEV identici)!\n";
+                    } 
+                    else {
+                        const SCEV *Difference = SE.getMinusSCEV(tripCountL0, tripCountL1);
+                        if (Difference->isZero()) {
+                            sameTripCount = true;
+                            if (verbose) errs() << "I due loop hanno lo stesso Trip Count esatto (Differenza matematica = 0)!\n";
+                        } else {
+                            if (verbose) {
+                                errs() << "I Trip Count differiscono.\n";
+                                if (isa<SCEVConstant>(Difference)) {
+                                    errs() << "  -> Nota: Differiscono solo per un valore costante.\n";
+                                }
+                            }
+                        }
+                    }
+                } 
+                
+                if (!sameTripCount) {
+                    if(verbose) errs() << "Fusione interrotta: il numero di iterazioni non corrisponde.\n";
+                // continue; // Salta al prossimo paio di loop
+                }
+            }
+
+
+/*          
             if(verbose) {outs() << "\n---CONTROLLO TRIP COUNT---\n";}
             
             if (tripCountL0 != tripCountL1){
@@ -158,7 +285,7 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
                 outs() << "i loop vengono eseguiti lo stesso numero di volte" << "\n";
                 sameTripCount = true;
             }
-
+*/
 
             // Controllo control flow equivalenza
             if (verbose) errs()<<"\n---CONTROLLO CONTROL FLOW ---\n";
