@@ -11,6 +11,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/Analysis/DependenceAnalysis.h"
 
 #include "llvm/IR/Dominators.h"
 #include "llvm/Analysis/PostDominators.h"
@@ -120,12 +121,14 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
         LoopInfo &LI = AM.getResult<LoopAnalysis>(F);
         ScalarEvolution &SE = AM.getResult<ScalarEvolutionAnalysis>(F);
 
+        DependenceInfo &DI = AM.getResult<DependenceAnalysis>(F);
+
         // Inizia dai top-level loops
         std::vector<Loop*> topLevelLoops = LI.getTopLevelLoops();
         
         if(topLevelLoops.size() > 0)
             std::reverse(topLevelLoops.begin(), topLevelLoops.end());
-            processLoopSiblings(topLevelLoops, SE, DT, PDT);
+            processLoopSiblings(topLevelLoops, SE, DI, DT, PDT);
 
 
     return PreservedAnalyses::all();
@@ -171,7 +174,7 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
     // 3. visita ricorsivamente i subloops
     //
     //========================================================
-    void processLoopSiblings(ArrayRef<Loop *> Loops, ScalarEvolution &SE, DominatorTree &DT, PostDominatorTree &PDT) {
+    void processLoopSiblings(ArrayRef<Loop *> Loops, ScalarEvolution &SE, DependenceInfo &DI, DominatorTree &DT, PostDominatorTree &PDT) {
         // if (verbose) outs() << "number of loops in the function: " << Loops.size() << "\n";
 
         // Vengono tenuti gli indici dei loop che sono stati fusi, durante l'iterazione si controlla che l'indice che si sta per scegliere sia differente da uno in questa lista
@@ -298,13 +301,23 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
                 outs() << "I due loop NON sono control flow equivalenti\n";
             }
 
+            // Controllo dipendenze negative
+            errs() << "\n---CONTROLLO DIPENDENZE NEGATIVE---\n";
+            if (hasNegativeDependence(L0, L1, DI, SE)) {
+                errs() << "Non posso fondere i loop: dipendenza negativa trovata\n";
+                //continue;
+            }
+            else {
+                errs() << "Non ci sono dipendenze negative!\n";
+            }
+
 
         }
 
         // Ricorsione sui subloops
         for (Loop *L : Loops) {
             if(L->getSubLoops().size() != 0)
-                processLoopSiblings(L->getSubLoops(), SE, DT, PDT);
+                processLoopSiblings(L->getSubLoops(), SE, DI, DT, PDT);
         }
     }
 
@@ -661,6 +674,217 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
         BasicBlock *HeaderL1 = L1->getHeader();
 
         return DT.dominates(HeaderL0, HeaderL1) && PDT.dominates(HeaderL1, HeaderL0);
+    }
+
+    //======================================================================
+    // Funzione che controlla se esistono dipendenze a distanza negativa 
+    // tra i due loop
+    //======================================================================
+    bool hasNegativeDependence(Loop *L0, Loop *L1, DependenceInfo &DI, ScalarEvolution &SE) {
+
+        //--------------------------------------------------
+        // Scansiona tutte le istruzioni del primo loop
+        //--------------------------------------------------
+
+        for (BasicBlock *BB0 : L0->blocks()) {
+
+            for (Instruction &I0 : *BB0) {
+
+                //--------------------------------------------------
+                // Consideriamo solo load/store
+                //--------------------------------------------------
+
+                if (!isa<LoadInst>(I0) && !isa<StoreInst>(I0))
+                    continue;
+
+                //--------------------------------------------------
+                // Scansiona tutte le istruzioni del secondo loop
+                //--------------------------------------------------
+
+                for (BasicBlock *BB1 : L1->blocks()) {
+
+                    for (Instruction &I1 : *BB1) {
+
+                        //------------------------------------------
+                        // Consideriamo solo load/store
+                        //------------------------------------------
+
+                        if (!isa<LoadInst>(I1) && !isa<StoreInst>(I1))
+                            continue;
+
+                        //------------------------------------------
+                        // Chiede alla Dependence Analysis se
+                        // esiste una dipendenza memoria
+                        //------------------------------------------
+
+                        auto Dep = DI.depends(&I0, &I1, true);
+
+                        //------------------------------------------
+                        // Nessuna dipendenza
+                        //------------------------------------------
+
+                        if (!Dep)
+                            continue;
+
+                        //-------------------------------------
+                        // Stampa di debug: stampo la dipendenza
+                        //-------------------------------------
+
+                        else {
+
+                            errs() << "\nDEPENDENCE FOUND\n";
+
+                            //Dep->dump(errs());
+
+                            errs() << "I0: ";
+                            I0.print(errs());
+
+                            errs() << "\nI1: ";
+                            I1.print(errs());
+
+                            errs() << "\n";
+
+                        }
+
+                        //------------------------------------------
+                        // Recupera i puntatori utilizzati
+                        // dalle load/store
+                        //------------------------------------------
+
+                        Value *Ptr0 = getLoadStorePointerOperand(&I0);
+
+                        Value *Ptr1 = getLoadStorePointerOperand(&I1);
+
+                        // Elimino cast inutili
+
+                        Ptr0 = Ptr0->stripPointerCasts();
+                        Ptr1 = Ptr1->stripPointerCasts();
+
+                        // Controllo che siano GEP
+
+                        auto *GEP0 = dyn_cast<GetElementPtrInst>(Ptr0);
+                        auto *GEP1 = dyn_cast<GetElementPtrInst>(Ptr1);
+
+                        if (!GEP0 || !GEP1)
+                            continue;
+
+                        // Recupero la base 
+
+                        Value *Base0 = GEP0->getPointerOperand();
+                        Value *Base1 = GEP1->getPointerOperand();
+
+                        // Confronto le basi
+
+                        if (Base0 != Base1)
+                            continue;
+
+                        
+                        Value *Idx0 = GEP0->getOperand(GEP0->getNumOperands()-1);
+                        Value *Idx1 = GEP1->getOperand(GEP1->getNumOperands()-1);
+
+                        const SCEV *IdxS0 = SE.getSCEV(Idx0);
+                        const SCEV *IdxS1 = SE.getSCEV(Idx1);
+
+                        //------------------------------------------
+                        // Riscrive gli indirizzi come SCEV
+                        // nel contesto di un loop comune
+                        //------------------------------------------
+
+                        //Loop *CommonLoop = L0->getParentLoop();
+
+                        //const SCEV *S0 = SE.getSCEVAtScope(Ptr0, CommonLoop);
+
+                        //const SCEV *S1 = SE.getSCEVAtScope(Ptr1, CommonLoop);
+
+                        //------------------------------------------
+                        // Calcola:
+                        //
+                        // Address(L0) - Address(L1)
+                        //------------------------------------------
+
+                        const SCEV *Delta = SE.getMinusSCEV(IdxS0, IdxS1);
+
+                        errs() << "S0: ";
+                        IdxS0->print(errs());
+
+                        errs() << "\nS1: ";
+                        IdxS1->print(errs());
+
+                        errs() << "\nDelta: ";
+                        Delta->print(errs());
+
+                        errs() << "\n";
+
+                        //------------------------------------------
+                        // Se LLVM riesce a dimostrare che
+                        // il risultato è negativo
+                        //------------------------------------------
+
+                        if (auto *AR = dyn_cast<SCEVAddRecExpr>(Delta)) {
+
+                            const SCEV *Start = AR->getStart();
+
+                            errs() << "Start = ";
+                            Start->print(errs());
+                            errs() << "\n";
+
+                            if (auto *AR2 = dyn_cast<SCEVAddRecExpr>(Start)) {
+
+                                const SCEV *Start2 = AR2->getStart();
+
+                                errs() << "Start2 = ";
+                                Start2->print(errs());
+                                errs() << "\n";
+
+                                if (auto *C = dyn_cast<SCEVConstant>(Start2)) {
+
+                                    APInt V = C->getAPInt();
+
+                                    errs() << "Distance = " << V << "\n";
+
+                                    if (V.isNegative()) {
+
+                                        errs() << "Negative distance found\n";
+                                        errs() << "Address delta is negative\n";
+                                        errs() << "Negative dependence found\n";
+                                        return true;
+                                    }
+                                    else {
+                                        // dipendenza non negativa
+                                        errs() << "Address delta is non-negative\n";
+                                    }
+                                }
+                            }
+
+                        }
+
+                        
+                        /*
+                        if (SE.isKnownNegative(Delta)) {
+
+                            errs() << "Address delta is negative\n";
+
+                            errs() << "Negative dependence found\n";
+
+                            return true;
+                        }
+                        if (SE.isKnownNonNegative(Delta)) {
+
+                            errs() << "Address delta is non-negative\n";
+
+                        }
+                        */
+
+                    }
+                }
+            }
+        }
+
+        //--------------------------------------------------
+        // Nessuna dipendenza negativa trovata
+        //--------------------------------------------------
+
+        return false;
     }
 
 
