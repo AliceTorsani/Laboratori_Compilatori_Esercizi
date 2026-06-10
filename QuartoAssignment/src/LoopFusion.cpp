@@ -206,7 +206,24 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
                 // Ne ha più di uno
                 L0HasOneExitBlock = false;
             }
-                
+
+            // Controllo che L1 abbia un solo exiting block
+            // Un solo exiting block
+            bool L1HasOneExitingBlock = true;
+            SmallVector<BasicBlock *, 4> ExitingBlocks1;
+            L1->getExitingBlocks(ExitingBlocks1);
+
+            if (ExitingBlocks1.size() != 1){
+                // Ne ha più di uno
+                L1HasOneExitingBlock = false;
+            }
+            
+            // Se L0 oppure L1 hanno più di un ExitingBlock, allora non eseguo la fusione
+            if (!L0HasOneExitingBlock || !L1HasOneExitingBlock){
+                // Allora non eseguo la fusione
+                errs() << "Fusione interrotta: L0 oppure L1 hanno più di un ExitingBlock\n";
+                continue; // Salta al prossimo paio di loop
+            }
 
             if(verbose) {
                 errs() << "Checking adjacency between:\n";
