@@ -251,6 +251,9 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
             else {
 
                 errs() << "  --> NOT adjacent\n";
+                errs() << "Fusione interrotta!\n";
+                continue; // Salta al prossimo paio di loop
+
             }
             
 
@@ -291,7 +294,7 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
                 
                 if (!sameTripCount) {
                     if(verbose) errs() << "Fusione interrotta: il numero di iterazioni non corrisponde.\n";
-                // continue; // Salta al prossimo paio di loop
+                    continue; // Salta al prossimo paio di loop
                 }
             }
 
@@ -316,17 +319,26 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
             }
             else {
                 outs() << "I due loop NON sono control flow equivalenti\n";
+                errs() << "Fusione interrotta!\n";
+                continue; // Salta al prossimo paio di loop
             }
 
             // Controllo dipendenze negative
             errs() << "\n---CONTROLLO DIPENDENZE NEGATIVE---\n";
             if (hasNegativeDependence(L0, L1, DI, SE)) {
+                errs() << "----------------------------------\n";
                 errs() << "Non posso fondere i loop: dipendenza negativa trovata\n";
-                //continue;
+                errs() << "Fusione interrotta!\n";
+                continue; // Salta al prossimo paio di loop
             }
             else {
+                errs() << "----------------------------------\n";
                 errs() << "Non ci sono dipendenze negative!\n";
             }
+
+            outs() << "----------------------------------\n";
+            outs() << "Posso fondere i due loop!\n";
+            // Fusione dei due loop
 
 
         }
