@@ -10,7 +10,7 @@ define dso_local void @test_fusion_success(ptr noundef %0, ptr noundef %1, ptr n
 5:                                                ; preds = %14, %4
   %.01 = phi i32 [ 0, %4 ], [ %15, %14 ]
   %6 = icmp slt i32 %.01, %3
-  br i1 %6, label %7, label %16
+  br i1 %6, label %7, label %28
 
 7:                                                ; preds = %5
   %8 = sext i32 %.01 to i64
@@ -20,35 +20,35 @@ define dso_local void @test_fusion_success(ptr noundef %0, ptr noundef %1, ptr n
   %12 = sext i32 %.01 to i64
   %13 = getelementptr inbounds i32, ptr %0, i64 %12
   store i32 %11, ptr %13, align 4
-  br label %14
+  br label %19
 
-14:                                               ; preds = %7
+14:                                               ; preds = %19
   %15 = add nsw i32 %.01, 1
   br label %5, !llvm.loop !6
 
-16:                                               ; preds = %5
+16:                                               ; No predecessors!
   br label %17
 
 17:                                               ; preds = %26, %16
-  %.0 = phi i32 [ 0, %16 ], [ %27, %26 ]
-  %18 = icmp slt i32 %.0, %3
-  br i1 %18, label %19, label %28
+  %.0 = phi i32 [ 0, %16 ], [ %15, %26 ]
+  %18 = icmp slt i32 %.01, %3
+  br i1 %18, label %26, label %28
 
-19:                                               ; preds = %17
-  %20 = sext i32 %.0 to i64
+19:                                               ; preds = %7
+  %20 = sext i32 %.01 to i64
   %21 = getelementptr inbounds i32, ptr %0, i64 %20
   %22 = load i32, ptr %21, align 4
   %23 = add nsw i32 %22, 10
-  %24 = sext i32 %.0 to i64
+  %24 = sext i32 %.01 to i64
   %25 = getelementptr inbounds i32, ptr %2, i64 %24
   store i32 %23, ptr %25, align 4
-  br label %26
+  br label %14
 
-26:                                               ; preds = %19
-  %27 = add nsw i32 %.0, 1
+26:                                               ; preds = %17
+  %27 = add nsw i32 %.01, 1
   br label %17, !llvm.loop !8
 
-28:                                               ; preds = %17
+28:                                               ; preds = %5, %17
   ret void
 }
 

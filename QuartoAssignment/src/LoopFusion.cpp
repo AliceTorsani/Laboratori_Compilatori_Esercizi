@@ -340,6 +340,12 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
             outs() << "Posso fondere i due loop!\n";
             // Fusione dei due loop
 
+            // Modifico gli usi delle Induction Variables
+            unifyInductionVariables(L0, L1);
+
+            // Modifico il CFG
+            fuseCFG(L0, L1);
+
 
         }
 
@@ -914,6 +920,166 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
         //--------------------------------------------------
 
         return false;
+    }
+
+
+    //==========================================================
+    // Sostituisce la IV del loop 2 con la IV del loop 1
+    //
+    // IV2 -> IV1
+    // Inc2 -> Inc1
+    //
+    // Restituisce false se il loop non è canonico
+    //==========================================================
+
+    bool unifyInductionVariables(Loop *L1, Loop *L2) {
+
+        PHINode *IV1 = L1->getCanonicalInductionVariable();
+
+        PHINode *IV2 = L2->getCanonicalInductionVariable();
+
+        if (!IV1 || !IV2)
+            return false;
+
+        Instruction *Inc1 = cast<Instruction>(IV1->getIncomingValueForBlock(L1->getLoopLatch()));
+
+        Instruction *Inc2 = cast<Instruction>(IV2->getIncomingValueForBlock(L2->getLoopLatch()));
+
+        //--------------------------------------------------
+        // Sostituisce tutti gli usi
+        //--------------------------------------------------
+
+        IV2->replaceAllUsesWith(IV1);
+
+        Inc2->replaceAllUsesWith(Inc1);
+
+        errs() << "Induction variables unified\n";
+
+        return true;
+    }
+
+    //==========================================================
+    // Trova il body block del loop
+    //==========================================================
+
+    BasicBlock *getLoopBodyBlock(Loop *L) {
+
+        BasicBlock *Header = L->getHeader();
+        BasicBlock *Latch  = L->getLoopLatch();
+
+        for (BasicBlock *Succ : successors(Header)) {
+
+            if (Succ != Latch &&
+                !L->contains(Succ))
+                continue;
+
+            if (Succ != Latch)
+                return Succ;
+        }
+
+        return nullptr;
+    }
+
+    //==========================================================
+    // Modifica il CFG 
+    //
+    // header1 -> exit2
+    // body1   -> body2
+    // body2   -> latch1
+    // header2 -> latch2
+    //==========================================================
+
+    bool fuseCFG(Loop *L1, Loop *L2) {
+
+        //------------------------------------------------------
+        // Controllo struttura semplice
+        //------------------------------------------------------
+
+        errs() << "L1 blocks = " << L1->getNumBlocks() << "\n";
+
+        errs() << "L2 blocks = " << L2->getNumBlocks() << "\n";
+        
+
+        if (L1->getNumBlocks() != 3 || L2->getNumBlocks() != 3) {
+
+            errs() << "Loop not in simple form\n";
+            return false;
+        }
+
+        //------------------------------------------------------
+        // Recupero blocchi loop 1
+        //------------------------------------------------------
+
+        BasicBlock *Header1 = L1->getHeader();
+        BasicBlock *Latch1  = L1->getLoopLatch();
+        BasicBlock *Exit1   = L1->getExitBlock();
+
+        //------------------------------------------------------
+        // Recupero blocchi loop 2
+        //------------------------------------------------------
+
+        BasicBlock *Header2 = L2->getHeader();
+        BasicBlock *Latch2  = L2->getLoopLatch();
+        BasicBlock *Exit2   = L2->getExitBlock();
+
+        //------------------------------------------------------
+        // Recupero body
+        //------------------------------------------------------
+
+        BasicBlock *Body1 = getLoopBodyBlock(L1);
+
+        BasicBlock *Body2 = getLoopBodyBlock(L2);
+
+        if (!Body1 || !Body2)
+            return false;
+
+        errs() << "\nCFG fusion\n";
+
+        //------------------------------------------------------
+        // 1)
+        // HEADER1 -> EXIT2
+        //------------------------------------------------------
+
+        if (auto *BI = dyn_cast<BranchInst>(Header1->getTerminator())) {
+
+            BI->replaceSuccessorWith(Exit1, Exit2);
+        }
+
+        //------------------------------------------------------
+        // 2)
+        // BODY1 -> BODY2
+        //------------------------------------------------------
+
+        if (auto *BI = dyn_cast<BranchInst>(Body1->getTerminator())) {
+
+            BI->replaceSuccessorWith(Latch1, Body2);
+        }
+
+        //------------------------------------------------------
+        // 3)
+        // BODY2 -> LATCH1
+        //------------------------------------------------------
+
+        if (auto *BI = dyn_cast<BranchInst>(Body2->getTerminator())) {
+
+            BI->replaceSuccessorWith(Latch2, Latch1);
+        }
+
+        //------------------------------------------------------
+        // 4)
+        // HEADER2 -> LATCH2
+        //------------------------------------------------------
+
+        if (auto *BI = dyn_cast<BranchInst>(Header2->getTerminator())) {
+
+            BI->replaceSuccessorWith(Body2, Latch2);
+        }
+
+        errs() << "CFG fused\n";
+        errs() << "Fusione terminata!\n";
+        errs() << "---------------------------------\n";
+
+        return true;
     }
 
 
