@@ -340,10 +340,14 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
             outs() << "Posso fondere i due loop!\n";
             // Fusione dei due loop
 
-            // Modifico gli usi delle Induction Variables
-            unifyInductionVariables(L0, L1);
+            // Modifico gli usi delle Induction Variables (passando SE)
+            // Controllo che l'unificazione abbia avuto successo!
+            if(!unifyInductionVariables(L0, L1, SE)){
+                errs() << "Fusione interrotta: fallita unificazione delle variabili.\n";
+                continue; // Salta alla prossima coppia senza rompere il CFG
+            }
 
-            // Modifico il CFG
+            // Modifico il CFG (Solo se le variabili sono state sistemate)
             fuseCFG(L0, L1);
 
 
@@ -932,12 +936,35 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
     // Restituisce false se il loop non è canonico
     //==========================================================
 
-    bool unifyInductionVariables(Loop *L1, Loop *L2) {
+    bool unifyInductionVariables(Loop *L1, Loop *L2, ScalarEvolution &SE) {
 
-        PHINode *IV1 = L1->getCanonicalInductionVariable();
+        PHINode *IV1 = nullptr;
 
-        PHINode *IV2 = L2->getCanonicalInductionVariable();
+        PHINode *IV2 = nullptr;
+        // 1. Trova l'Induction Variable del primo loop
+        for (Instruction &I : *L1->getHeader()) {
+            if (PHINode *Phi = dyn_cast<PHINode>(&I)) {
+                if (SE.isSCEVable(Phi->getType())) {
+                    if (isa<SCEVAddRecExpr>(SE.getSCEV(Phi))) {
+                        IV1 = Phi;
+                        break;
+                    }
+                }
+            }
+        }
+        // 2. Trova l'Induction Variable del secondo loop
+        for (Instruction &I : *L2->getHeader()) {
+            if (PHINode *Phi = dyn_cast<PHINode>(&I)) {
+                if (SE.isSCEVable(Phi->getType())) {
+                    if (isa<SCEVAddRecExpr>(SE.getSCEV(Phi))) {
+                        IV2 = Phi;
+                        break;
+                    }
+                }
+            }
+        }
 
+        // Se non le trova, interrompe l'unificazione in sicurezza
         if (!IV1 || !IV2)
             return false;
 
