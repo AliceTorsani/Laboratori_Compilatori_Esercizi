@@ -941,17 +941,29 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
         if (!IV1 || !IV2)
             return false;
 
-        Instruction *Inc1 = cast<Instruction>(IV1->getIncomingValueForBlock(L1->getLoopLatch()));
-
-        Instruction *Inc2 = cast<Instruction>(IV2->getIncomingValueForBlock(L2->getLoopLatch()));
-
         //--------------------------------------------------
-        // Sostituisce tutti gli usi
+        // Sostituisce tutti gli usi di IV2 con IV1 nel body 2 
+        // Sostituisce solo gli usi nel body del loop 2
         //--------------------------------------------------
 
-        IV2->replaceAllUsesWith(IV1);
+        for (BasicBlock *BB : L2->blocks()) {
 
-        Inc2->replaceAllUsesWith(Inc1);
+            if (BB == L2->getHeader())
+                continue;
+
+            if (BB == L2->getLoopLatch())
+                continue;
+
+            for (Instruction &I : *BB) {
+
+                for (unsigned Op = 0; Op < I.getNumOperands(); ++Op) {
+
+                    if (I.getOperand(Op) == IV2)
+                        I.setOperand(Op, IV1);
+                }
+            }
+        }
+
 
         errs() << "Induction variables unified\n";
 
@@ -998,7 +1010,7 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
         errs() << "L1 blocks = " << L1->getNumBlocks() << "\n";
 
         errs() << "L2 blocks = " << L2->getNumBlocks() << "\n";
-        
+
 
         if (L1->getNumBlocks() != 3 || L2->getNumBlocks() != 3) {
 
@@ -1045,6 +1057,15 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
             BI->replaceSuccessorWith(Exit1, Exit2);
         }
 
+        //--------------------------------------------------
+        // Exit2 ha ora Header1 come predecessore
+        // invece di Header2
+        //--------------------------------------------------
+
+        replaceIncomingBlock(Exit2,
+                            Header2,
+                            Header1);
+
         //------------------------------------------------------
         // 2)
         // BODY1 -> BODY2
@@ -1055,6 +1076,15 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
             BI->replaceSuccessorWith(Latch1, Body2);
         }
 
+        //--------------------------------------------------
+        // Se Body2 contiene PHI
+        // aggiorna predecessore
+        //--------------------------------------------------
+
+        replaceIncomingBlock(Body2,
+                            Header2,
+                            Body1);
+
         //------------------------------------------------------
         // 3)
         // BODY2 -> LATCH1
@@ -1064,6 +1094,15 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
 
             BI->replaceSuccessorWith(Latch2, Latch1);
         }
+
+        //--------------------------------------------------
+        // Latch1 riceve ora Body2
+        // invece di Body1
+        //--------------------------------------------------
+
+        replaceIncomingBlock(Latch1,
+                            Body1,
+                            Body2);
 
         //------------------------------------------------------
         // 4)
@@ -1080,6 +1119,27 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
         errs() << "---------------------------------\n";
 
         return true;
+    }
+
+    //-------------------------------
+    // Helper per aggiornare le PHI
+    //-------------------------------
+    static void replaceIncomingBlock(BasicBlock *BB,
+                                 BasicBlock *OldPred,
+                                 BasicBlock *NewPred) {
+
+        for (Instruction &I : *BB) {
+
+            auto *Phi = dyn_cast<PHINode>(&I);
+
+            if (!Phi)
+                continue;
+
+            int Idx = Phi->getBasicBlockIndex(OldPred);
+
+            if (Idx >= 0)
+                Phi->setIncomingBlock(Idx, NewPred);
+        }
     }
 
 

@@ -10,40 +10,40 @@ define dso_local void @no_dependence(ptr noundef %0, ptr noundef %1, ptr noundef
 4:                                                ; preds = %9, %3
   %.01 = phi i32 [ 0, %3 ], [ %10, %9 ]
   %5 = icmp slt i32 %.01, 100
-  br i1 %5, label %6, label %11
+  br i1 %5, label %6, label %22
 
 6:                                                ; preds = %4
   %7 = sext i32 %.01 to i64
   %8 = getelementptr inbounds i32, ptr %0, i64 %7
   store i32 %.01, ptr %8, align 4
-  br label %9
+  br label %14
 
-9:                                                ; preds = %6
+9:                                                ; preds = %14
   %10 = add nsw i32 %.01, 1
   br label %4, !llvm.loop !6
 
-11:                                               ; preds = %4
+11:                                               ; No predecessors!
   br label %12
 
 12:                                               ; preds = %20, %11
   %.0 = phi i32 [ 0, %11 ], [ %21, %20 ]
   %13 = icmp slt i32 %.0, 100
-  br i1 %13, label %14, label %22
+  br i1 %13, label %20, label %22
 
-14:                                               ; preds = %12
-  %15 = sext i32 %.0 to i64
+14:                                               ; preds = %6
+  %15 = sext i32 %.01 to i64
   %16 = getelementptr inbounds i32, ptr %2, i64 %15
   %17 = load i32, ptr %16, align 4
-  %18 = sext i32 %.0 to i64
+  %18 = sext i32 %.01 to i64
   %19 = getelementptr inbounds i32, ptr %1, i64 %18
   store i32 %17, ptr %19, align 4
-  br label %20
+  br label %9
 
-20:                                               ; preds = %14
+20:                                               ; preds = %12
   %21 = add nsw i32 %.0, 1
   br label %12, !llvm.loop !8
 
-22:                                               ; preds = %12
+22:                                               ; preds = %4, %12
   ret void
 }
 
@@ -54,130 +54,40 @@ define dso_local void @distance_zero(ptr noundef %0, ptr noundef %1) #0 {
 3:                                                ; preds = %8, %2
   %.01 = phi i32 [ 0, %2 ], [ %9, %8 ]
   %4 = icmp slt i32 %.01, 100
-  br i1 %4, label %5, label %10
+  br i1 %4, label %5, label %21
 
 5:                                                ; preds = %3
   %6 = sext i32 %.01 to i64
   %7 = getelementptr inbounds i32, ptr %0, i64 %6
   store i32 %.01, ptr %7, align 4
-  br label %8
+  br label %13
 
-8:                                                ; preds = %5
+8:                                                ; preds = %13
   %9 = add nsw i32 %.01, 1
   br label %3, !llvm.loop !9
 
-10:                                               ; preds = %3
+10:                                               ; No predecessors!
   br label %11
 
 11:                                               ; preds = %19, %10
   %.0 = phi i32 [ 0, %10 ], [ %20, %19 ]
   %12 = icmp slt i32 %.0, 100
-  br i1 %12, label %13, label %21
+  br i1 %12, label %19, label %21
 
-13:                                               ; preds = %11
-  %14 = sext i32 %.0 to i64
+13:                                               ; preds = %5
+  %14 = sext i32 %.01 to i64
   %15 = getelementptr inbounds i32, ptr %0, i64 %14
   %16 = load i32, ptr %15, align 4
-  %17 = sext i32 %.0 to i64
+  %17 = sext i32 %.01 to i64
   %18 = getelementptr inbounds i32, ptr %1, i64 %17
   store i32 %16, ptr %18, align 4
-  br label %19
+  br label %8
 
-19:                                               ; preds = %13
+19:                                               ; preds = %11
   %20 = add nsw i32 %.0, 1
   br label %11, !llvm.loop !10
 
-21:                                               ; preds = %11
-  ret void
-}
-
-; Function Attrs: noinline nounwind uwtable
-define dso_local void @positive_distance_1(ptr noundef %0, ptr noundef %1) #0 {
-  br label %3
-
-3:                                                ; preds = %8, %2
-  %.01 = phi i32 [ 1, %2 ], [ %9, %8 ]
-  %4 = icmp slt i32 %.01, 100
-  br i1 %4, label %5, label %10
-
-5:                                                ; preds = %3
-  %6 = sext i32 %.01 to i64
-  %7 = getelementptr inbounds i32, ptr %0, i64 %6
-  store i32 %.01, ptr %7, align 4
-  br label %8
-
-8:                                                ; preds = %5
-  %9 = add nsw i32 %.01, 1
-  br label %3, !llvm.loop !11
-
-10:                                               ; preds = %3
-  br label %11
-
-11:                                               ; preds = %20, %10
-  %.0 = phi i32 [ 1, %10 ], [ %21, %20 ]
-  %12 = icmp slt i32 %.0, 100
-  br i1 %12, label %13, label %22
-
-13:                                               ; preds = %11
-  %14 = sub nsw i32 %.0, 1
-  %15 = sext i32 %14 to i64
-  %16 = getelementptr inbounds i32, ptr %0, i64 %15
-  %17 = load i32, ptr %16, align 4
-  %18 = sext i32 %.0 to i64
-  %19 = getelementptr inbounds i32, ptr %1, i64 %18
-  store i32 %17, ptr %19, align 4
-  br label %20
-
-20:                                               ; preds = %13
-  %21 = add nsw i32 %.0, 1
-  br label %11, !llvm.loop !12
-
-22:                                               ; preds = %11
-  ret void
-}
-
-; Function Attrs: noinline nounwind uwtable
-define dso_local void @positive_distance_3(ptr noundef %0, ptr noundef %1) #0 {
-  br label %3
-
-3:                                                ; preds = %8, %2
-  %.01 = phi i32 [ 3, %2 ], [ %9, %8 ]
-  %4 = icmp slt i32 %.01, 100
-  br i1 %4, label %5, label %10
-
-5:                                                ; preds = %3
-  %6 = sext i32 %.01 to i64
-  %7 = getelementptr inbounds i32, ptr %0, i64 %6
-  store i32 %.01, ptr %7, align 4
-  br label %8
-
-8:                                                ; preds = %5
-  %9 = add nsw i32 %.01, 1
-  br label %3, !llvm.loop !13
-
-10:                                               ; preds = %3
-  br label %11
-
-11:                                               ; preds = %20, %10
-  %.0 = phi i32 [ 3, %10 ], [ %21, %20 ]
-  %12 = icmp slt i32 %.0, 100
-  br i1 %12, label %13, label %22
-
-13:                                               ; preds = %11
-  %14 = sub nsw i32 %.0, 3
-  %15 = sext i32 %14 to i64
-  %16 = getelementptr inbounds i32, ptr %0, i64 %15
-  %17 = load i32, ptr %16, align 4
-  %18 = sext i32 %.0 to i64
-  %19 = getelementptr inbounds i32, ptr %1, i64 %18
-  store i32 %17, ptr %19, align 4
-  br label %20
-
-20:                                               ; preds = %13
-  %21 = add nsw i32 %.0, 1
-  br label %11, !llvm.loop !14
-
-22:                                               ; preds = %11
+21:                                               ; preds = %3, %11
   ret void
 }
 
@@ -198,7 +108,7 @@ define dso_local void @negative_distance_minus1(ptr noundef %0, ptr noundef %1) 
 
 8:                                                ; preds = %5
   %9 = add nsw i32 %.01, 1
-  br label %3, !llvm.loop !15
+  br label %3, !llvm.loop !11
 
 10:                                               ; preds = %3
   br label %11
@@ -220,7 +130,7 @@ define dso_local void @negative_distance_minus1(ptr noundef %0, ptr noundef %1) 
 
 20:                                               ; preds = %13
   %21 = add nsw i32 %.0, 1
-  br label %11, !llvm.loop !16
+  br label %11, !llvm.loop !12
 
 22:                                               ; preds = %11
   ret void
@@ -243,7 +153,7 @@ define dso_local void @negative_distance_minus3(ptr noundef %0, ptr noundef %1) 
 
 8:                                                ; preds = %5
   %9 = add nsw i32 %.01, 1
-  br label %3, !llvm.loop !17
+  br label %3, !llvm.loop !13
 
 10:                                               ; preds = %3
   br label %11
@@ -265,7 +175,7 @@ define dso_local void @negative_distance_minus3(ptr noundef %0, ptr noundef %1) 
 
 20:                                               ; preds = %13
   %21 = add nsw i32 %.0, 1
-  br label %11, !llvm.loop !18
+  br label %11, !llvm.loop !14
 
 22:                                               ; preds = %11
   ret void
@@ -289,7 +199,7 @@ define dso_local void @user_example(ptr noundef %0, ptr noundef %1) #0 {
 
 9:                                                ; preds = %5
   %10 = add nsw i32 %.01, 1
-  br label %3, !llvm.loop !19
+  br label %3, !llvm.loop !15
 
 11:                                               ; preds = %3
   br label %12
@@ -312,7 +222,7 @@ define dso_local void @user_example(ptr noundef %0, ptr noundef %1) #0 {
 
 22:                                               ; preds = %14
   %23 = add nsw i32 %.0, 1
-  br label %12, !llvm.loop !20
+  br label %12, !llvm.loop !16
 
 24:                                               ; preds = %12
   ret void
@@ -325,38 +235,38 @@ define dso_local void @output_dependence(ptr noundef %0) #0 {
 2:                                                ; preds = %7, %1
   %.01 = phi i32 [ 0, %1 ], [ %8, %7 ]
   %3 = icmp slt i32 %.01, 100
-  br i1 %3, label %4, label %9
+  br i1 %3, label %4, label %18
 
 4:                                                ; preds = %2
   %5 = sext i32 %.01 to i64
   %6 = getelementptr inbounds i32, ptr %0, i64 %5
   store i32 %.01, ptr %6, align 4
-  br label %7
+  br label %12
 
-7:                                                ; preds = %4
+7:                                                ; preds = %12
   %8 = add nsw i32 %.01, 1
-  br label %2, !llvm.loop !21
+  br label %2, !llvm.loop !17
 
-9:                                                ; preds = %2
+9:                                                ; No predecessors!
   br label %10
 
 10:                                               ; preds = %16, %9
   %.0 = phi i32 [ 0, %9 ], [ %17, %16 ]
   %11 = icmp slt i32 %.0, 100
-  br i1 %11, label %12, label %18
+  br i1 %11, label %16, label %18
 
-12:                                               ; preds = %10
-  %13 = mul nsw i32 2, %.0
-  %14 = sext i32 %.0 to i64
+12:                                               ; preds = %4
+  %13 = mul nsw i32 2, %.01
+  %14 = sext i32 %.01 to i64
   %15 = getelementptr inbounds i32, ptr %0, i64 %14
   store i32 %13, ptr %15, align 4
-  br label %16
+  br label %7
 
-16:                                               ; preds = %12
+16:                                               ; preds = %10
   %17 = add nsw i32 %.0, 1
-  br label %10, !llvm.loop !22
+  br label %10, !llvm.loop !18
 
-18:                                               ; preds = %10
+18:                                               ; preds = %2, %10
   ret void
 }
 
@@ -367,7 +277,7 @@ define dso_local void @anti_dependence(ptr noundef %0, ptr noundef %1) #0 {
 3:                                                ; preds = %11, %2
   %.01 = phi i32 [ 0, %2 ], [ %12, %11 ]
   %4 = icmp slt i32 %.01, 100
-  br i1 %4, label %5, label %13
+  br i1 %4, label %5, label %21
 
 5:                                                ; preds = %3
   %6 = sext i32 %.01 to i64
@@ -376,31 +286,31 @@ define dso_local void @anti_dependence(ptr noundef %0, ptr noundef %1) #0 {
   %9 = sext i32 %.01 to i64
   %10 = getelementptr inbounds i32, ptr %1, i64 %9
   store i32 %8, ptr %10, align 4
-  br label %11
+  br label %16
 
-11:                                               ; preds = %5
+11:                                               ; preds = %16
   %12 = add nsw i32 %.01, 1
-  br label %3, !llvm.loop !23
+  br label %3, !llvm.loop !19
 
-13:                                               ; preds = %3
+13:                                               ; No predecessors!
   br label %14
 
 14:                                               ; preds = %19, %13
   %.0 = phi i32 [ 0, %13 ], [ %20, %19 ]
   %15 = icmp slt i32 %.0, 100
-  br i1 %15, label %16, label %21
+  br i1 %15, label %19, label %21
 
-16:                                               ; preds = %14
-  %17 = sext i32 %.0 to i64
+16:                                               ; preds = %5
+  %17 = sext i32 %.01 to i64
   %18 = getelementptr inbounds i32, ptr %0, i64 %17
-  store i32 %.0, ptr %18, align 4
-  br label %19
+  store i32 %.01, ptr %18, align 4
+  br label %11
 
-19:                                               ; preds = %16
+19:                                               ; preds = %14
   %20 = add nsw i32 %.0, 1
-  br label %14, !llvm.loop !24
+  br label %14, !llvm.loop !20
 
-21:                                               ; preds = %14
+21:                                               ; preds = %3, %14
   ret void
 }
 
@@ -418,10 +328,8 @@ define dso_local i32 @main() #0 {
   call void @distance_zero(ptr noundef %7, ptr noundef %8)
   %9 = getelementptr inbounds [100 x i32], ptr %1, i64 0, i64 0
   %10 = getelementptr inbounds [100 x i32], ptr %2, i64 0, i64 0
-  call void @positive_distance_1(ptr noundef %9, ptr noundef %10)
   %11 = getelementptr inbounds [100 x i32], ptr %1, i64 0, i64 0
   %12 = getelementptr inbounds [100 x i32], ptr %2, i64 0, i64 0
-  call void @positive_distance_3(ptr noundef %11, ptr noundef %12)
   %13 = getelementptr inbounds [100 x i32], ptr %1, i64 0, i64 0
   %14 = getelementptr inbounds [100 x i32], ptr %2, i64 0, i64 0
   call void @negative_distance_minus1(ptr noundef %13, ptr noundef %14)
@@ -465,7 +373,3 @@ attributes #0 = { noinline nounwind uwtable "frame-pointer"="all" "min-legal-vec
 !18 = distinct !{!18, !7}
 !19 = distinct !{!19, !7}
 !20 = distinct !{!20, !7}
-!21 = distinct !{!21, !7}
-!22 = distinct !{!22, !7}
-!23 = distinct !{!23, !7}
-!24 = distinct !{!24, !7}

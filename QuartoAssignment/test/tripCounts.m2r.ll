@@ -627,49 +627,49 @@ define dso_local void @_Z22sameTC_differentUpdatePiS_ii(ptr noundef %0, ptr noun
 }
 
 ; Function Attrs: mustprogress noinline nounwind uwtable
-define dso_local void @_Z29sameTC_differentTripDirectionPiS_ii(ptr noundef %0, ptr noundef %1, i32 noundef %2, i32 noundef %3) #0 {
-  br label %5
+; define dso_local void @_Z29sameTC_differentTripDirectionPiS_ii(ptr noundef %0, ptr noundef %1, i32 noundef %2, i32 noundef %3) #0 {
+;   br label %5
 
-5:                                                ; preds = %12, %4
-  %.01 = phi i32 [ 0, %4 ], [ %13, %12 ]
-  %6 = icmp slt i32 %.01, 15
-  br i1 %6, label %7, label %14
+; 5:                                                ; preds = %12, %4
+;   %.01 = phi i32 [ 0, %4 ], [ %13, %12 ]
+;   %6 = icmp slt i32 %.01, 15
+;   br i1 %6, label %7, label %14
 
-7:                                                ; preds = %5
-  %8 = sext i32 %.01 to i64
-  %9 = getelementptr inbounds i32, ptr %0, i64 %8
-  %10 = load i32, ptr %9, align 4
-  %11 = add nsw i32 %10, 1
-  store i32 %11, ptr %9, align 4
-  br label %12
+; 7:                                                ; preds = %5
+;   %8 = sext i32 %.01 to i64
+;   %9 = getelementptr inbounds i32, ptr %0, i64 %8
+;   %10 = load i32, ptr %9, align 4
+;   %11 = add nsw i32 %10, 1
+;   store i32 %11, ptr %9, align 4
+;   br label %12
 
-12:                                               ; preds = %7
-  %13 = add nsw i32 %.01, 1
-  br label %5, !llvm.loop !33
+; 12:                                               ; preds = %7
+;   %13 = add nsw i32 %.01, 1
+;   br label %5, !llvm.loop !33
 
-14:                                               ; preds = %5
-  br label %15
+; 14:                                               ; preds = %5
+;   br label %15
 
-15:                                               ; preds = %22, %14
-  %.0 = phi i32 [ 15, %14 ], [ %23, %22 ]
-  %16 = icmp sgt i32 %.0, 0
-  br i1 %16, label %17, label %24
+; 15:                                               ; preds = %22, %14
+;   %.0 = phi i32 [ 15, %14 ], [ %23, %22 ]
+;   %16 = icmp sgt i32 %.0, 0
+;   br i1 %16, label %17, label %24
 
-17:                                               ; preds = %15
-  %18 = sext i32 %.0 to i64
-  %19 = getelementptr inbounds i32, ptr %1, i64 %18
-  %20 = load i32, ptr %19, align 4
-  %21 = sub nsw i32 %20, 1
-  store i32 %21, ptr %19, align 4
-  br label %22
+; 17:                                               ; preds = %15
+;   %18 = sext i32 %.0 to i64
+;   %19 = getelementptr inbounds i32, ptr %1, i64 %18
+;   %20 = load i32, ptr %19, align 4
+;   %21 = sub nsw i32 %20, 1
+;   store i32 %21, ptr %19, align 4
+;   br label %22
 
-22:                                               ; preds = %17
-  %23 = add nsw i32 %.0, -1
-  br label %15, !llvm.loop !34
+; 22:                                               ; preds = %17
+;   %23 = add nsw i32 %.0, -1
+;   br label %15, !llvm.loop !34
 
-24:                                               ; preds = %15
-  ret void
-}
+; 24:                                               ; preds = %15
+;    ret void
+; }
 
 ; Function Attrs: mustprogress noinline nounwind uwtable
 define dso_local void @_Z16sameTC_doWAndForPiS_ii(ptr noundef %0, ptr noundef %1, i32 noundef %2, i32 noundef %3) #0 {
@@ -778,49 +778,49 @@ define dso_local void @_Z21sameTC_equalWithConstPiS_(ptr noundef %0, ptr noundef
 }
 
 ; Function Attrs: mustprogress noinline nounwind uwtable
-define dso_local void @_Z34sameTC_equalWithConstAndInverseDirPiS_(ptr noundef %0, ptr noundef %1) #0 {
-  br label %3
+; define dso_local void @_Z34sameTC_equalWithConstAndInverseDirPiS_(ptr noundef %0, ptr noundef %1) #0 {
+;   br label %3
 
-3:                                                ; preds = %10, %2
-  %.01 = phi i32 [ 0, %2 ], [ %11, %10 ]
-  %4 = icmp slt i32 %.01, 15
-  br i1 %4, label %5, label %12
+; 3:                                                ; preds = %10, %2
+;   %.01 = phi i32 [ 0, %2 ], [ %11, %10 ]
+;   %4 = icmp slt i32 %.01, 15
+;  br i1 %4, label %5, label %12
 
-5:                                                ; preds = %3
-  %6 = sext i32 %.01 to i64
-  %7 = getelementptr inbounds i32, ptr %0, i64 %6
-  %8 = load i32, ptr %7, align 4
-  %9 = add nsw i32 %8, 1
-  store i32 %9, ptr %7, align 4
-  br label %10
+; 5:                                                ; preds = %3
+;   %6 = sext i32 %.01 to i64
+;   %7 = getelementptr inbounds i32, ptr %0, i64 %6
+;   %8 = load i32, ptr %7, align 4
+;   %9 = add nsw i32 %8, 1
+;   store i32 %9, ptr %7, align 4
+;   br label %10
 
-10:                                               ; preds = %5
-  %11 = add nsw i32 %.01, 1
-  br label %3, !llvm.loop !40
+; 10:                                               ; preds = %5
+;   %11 = add nsw i32 %.01, 1
+;   br label %3, !llvm.loop !40
 
-12:                                               ; preds = %3
-  br label %13
+; 12:                                               ; preds = %3
+;   br label %13
 
-13:                                               ; preds = %20, %12
-  %.0 = phi i32 [ 15, %12 ], [ %21, %20 ]
-  %14 = icmp sgt i32 %.0, 0
-  br i1 %14, label %15, label %22
+; 13:                                               ; preds = %20, %12
+;   %.0 = phi i32 [ 15, %12 ], [ %21, %20 ]
+;   %14 = icmp sgt i32 %.0, 0
+;   br i1 %14, label %15, label %22
 
-15:                                               ; preds = %13
-  %16 = sext i32 %.0 to i64
-  %17 = getelementptr inbounds i32, ptr %1, i64 %16
-  %18 = load i32, ptr %17, align 4
-  %19 = sub nsw i32 %18, 1
-  store i32 %19, ptr %17, align 4
-  br label %20
+; 15:                                               ; preds = %13
+;   %16 = sext i32 %.0 to i64
+;   %17 = getelementptr inbounds i32, ptr %1, i64 %16
+;   %18 = load i32, ptr %17, align 4
+;   %19 = sub nsw i32 %18, 1
+;   store i32 %19, ptr %17, align 4
+;   br label %20
 
-20:                                               ; preds = %15
-  %21 = add nsw i32 %.0, -1
-  br label %13, !llvm.loop !41
+; 20:                                               ; preds = %15
+;   %21 = add nsw i32 %.0, -1
+;   br label %13, !llvm.loop !41
 
-22:                                               ; preds = %13
-  ret void
-}
+; 22:                                               ; preds = %13
+;   ret void
+; }
 
 ; Function Attrs: mustprogress noinline norecurse nounwind uwtable
 define dso_local noundef i32 @main() #1 {

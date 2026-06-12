@@ -30,8 +30,8 @@ define dso_local void @test_fusion_success(ptr noundef %0, ptr noundef %1, ptr n
   br label %17
 
 17:                                               ; preds = %26, %16
-  %.0 = phi i32 [ 0, %16 ], [ %15, %26 ]
-  %18 = icmp slt i32 %.01, %3
+  %.0 = phi i32 [ 0, %16 ], [ %27, %26 ]
+  %18 = icmp slt i32 %.0, %3
   br i1 %18, label %26, label %28
 
 19:                                               ; preds = %7
@@ -45,7 +45,7 @@ define dso_local void @test_fusion_success(ptr noundef %0, ptr noundef %1, ptr n
   br label %14
 
 26:                                               ; preds = %17
-  %27 = add nsw i32 %.01, 1
+  %27 = add nsw i32 %.0, 1
   br label %17, !llvm.loop !8
 
 28:                                               ; preds = %5, %17
