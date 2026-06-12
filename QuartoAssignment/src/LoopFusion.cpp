@@ -23,8 +23,6 @@
 
 using namespace llvm;
 
-//TODO controllare che ci sia un solo exit block -> fatto
-//TODO controllare quando viene controllato il preheader
 
 namespace {
 
@@ -170,18 +168,18 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
     // Questa funzione:
     //
     // 1. controlla i loop consecutivi allo stesso livello
-    // 2. calcola i trip count per ogni coppia
-    // 3. visita ricorsivamente i subloops
+    // 2. controlla se due loop sono adiacenti
+    // 3. calcola i trip count per ogni coppia
+    // 4. controlla se i loop sono control flow equivalenti
+    // 5. controlla se ci sono dipendenze negative tra i due loop
+    // 6. fonde i due loop
+    // 7. visita ricorsivamente i subloops
     //
     //========================================================
     void processLoopSiblings(ArrayRef<Loop *> Loops, ScalarEvolution &SE, DependenceInfo &DI, DominatorTree &DT, PostDominatorTree &PDT) {
-        // if (verbose) outs() << "number of loops in the function: " << Loops.size() << "\n";
-
-        // Vengono tenuti gli indici dei loop che sono stati fusi, durante l'iterazione si controlla che l'indice che si sta per scegliere sia differente da uno in questa lista
 
         // Controlla coppie consecutive di siblings
         for (unsigned i = 0; i+1 < Loops.size(); ++i) {
-            // if (1) outs() << "indexes: " << i << ", " << i-1 << "\n";
 
             Loop *L0 = Loops[i];
 
@@ -298,17 +296,6 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
                 }
             }
 
-
-/*          
-            if(verbose) {outs() << "\n---CONTROLLO TRIP COUNT---\n";}
-            
-            if (tripCountL0 != tripCountL1){
-                outs() << "numero di esecuzioni differente\n";
-            } else {
-                outs() << "i loop vengono eseguiti lo stesso numero di volte" << "\n";
-                sameTripCount = true;
-            }
-*/
 
             // Controllo control flow equivalenza
             if (verbose) errs()<<"\n---CONTROLLO CONTROL FLOW ---\n";
@@ -683,7 +670,7 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
                 //operando complementare all'altro (>= e <=)
                 if(CondInst0->getPredicate() == CondInst1->getSwappedPredicate()) {
                     
-                    //registri apeculari -> sono equivalenti
+                    //registri speculari -> sono equivalenti
                     if((CondInst0->getOperand(0) == CondInst1->getOperand(1)) &&
                     (CondInst0->getOperand(1) == CondInst1->getOperand(0))) {
                         
@@ -773,8 +760,6 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
 
                             errs() << "\nDEPENDENCE FOUND\n";
 
-                            //Dep->dump(errs());
-
                             errs() << "I0: ";
                             I0.print(errs());
 
@@ -814,26 +799,16 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
 
                         // Confronto le basi
 
-                        if (Base0 != Base1)
+                        if (Base0 != Base1){
+                            errs() <<"Basi diverse.\n";
                             continue;
-
+                        }
                         
                         Value *Idx0 = GEP0->getOperand(GEP0->getNumOperands()-1);
                         Value *Idx1 = GEP1->getOperand(GEP1->getNumOperands()-1);
 
                         const SCEV *IdxS0 = SE.getSCEV(Idx0);
                         const SCEV *IdxS1 = SE.getSCEV(Idx1);
-
-                        //------------------------------------------
-                        // Riscrive gli indirizzi come SCEV
-                        // nel contesto di un loop comune
-                        //------------------------------------------
-
-                        //Loop *CommonLoop = L0->getParentLoop();
-
-                        //const SCEV *S0 = SE.getSCEVAtScope(Ptr0, CommonLoop);
-
-                        //const SCEV *S1 = SE.getSCEVAtScope(Ptr1, CommonLoop);
 
                         //------------------------------------------
                         // Calcola:
@@ -897,23 +872,6 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
 
                         }
 
-                        
-                        /*
-                        if (SE.isKnownNegative(Delta)) {
-
-                            errs() << "Address delta is negative\n";
-
-                            errs() << "Negative dependence found\n";
-
-                            return true;
-                        }
-                        if (SE.isKnownNonNegative(Delta)) {
-
-                            errs() << "Address delta is non-negative\n";
-
-                        }
-                        */
-
                     }
                 }
             }
@@ -931,7 +889,6 @@ struct LoopFusion: PassInfoMixin<LoopFusion> {
     // Sostituisce la IV del loop 2 con la IV del loop 1
     //
     // IV2 -> IV1
-    // Inc2 -> Inc1
     //
     // Restituisce false se il loop non è canonico
     //==========================================================
@@ -1194,7 +1151,7 @@ llvm::PassPluginLibraryInfo getLoopFusionPluginInfo() {
 
 // This is the core interface for pass plugins. It guarantees that 'opt' will
 // be able to recognize LoopFusion when added to the pass pipeline on the
-// command line, i.e. via '-passes=loop-fusion'
+// command line, i.e. via '-passes=my-loop-fusion'
 extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo
 llvmGetPassPluginInfo() {
   return getLoopFusionPluginInfo();
